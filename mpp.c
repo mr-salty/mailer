@@ -1,5 +1,8 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.4  1996/08/06 15:42:23  tjd
+ * changed order of headers per 822 4.1
+ *
  * Revision 1.3  1996/08/05 17:55:26  tjd
  * added Received: header on outgoing message
  *
@@ -46,7 +49,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if(!(message=malloc((sbuf.st_size*2)+256)))
+	if(!(message=malloc((sbuf.st_size*2)+512)))
 	{
 		perror("malloc (message)");
 		exit(1);
@@ -74,6 +77,20 @@ int main(int argc, char *argv[])
 	hdr=1;
 	reqhdr=0;
 
+	/* per RFC822 4.1: preferred order of headers is: "Return-Path",
+	 * "Received", "Date", "From", "Subject", "Sender", "To"
+	 */
+
+	sprintf(p,"Received: from local (localhost)\r\n"
+		  "          by %s (mailer 1.0b) with SMTP;\r\n"
+		  "          %s\r\n",argv[3],arpadate(NULL));
+	p+=strlen(p);
+	sprintf(p,"Date: %s\r\n",arpadate(NULL));
+	p+=strlen(p);
+	sprintf(p,"Message-Id: <%s.%d.%d@%s>\r\n",
+			HEADER_HEADER,(int)time(NULL),rand(),argv[3]);
+	p+=strlen(p);
+
 	while(fgets(line,MAX_LINE_LEN+1,f))
 	{
 		int l;
@@ -100,14 +117,6 @@ int main(int argc, char *argv[])
 
 				exit(1);
 			}
-			sprintf(p,"Date: %s\r\n",arpadate(NULL));
-			p+=strlen(p);
-			sprintf(p,"Received: from mailer by %s with SMTP;\r\n"
-				  "          %s\r\n",argv[3],arpadate(NULL));
-			p+=strlen(p);
-			sprintf(p,"Message-Id: <%s.%d.%d@%s>\r\n",
-				HEADER_HEADER,(int)time(NULL),rand(),argv[3]);
-			p+=strlen(p);
 		}
 
 		/* Add cr/lf */
