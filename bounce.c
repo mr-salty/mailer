@@ -1,6 +1,9 @@
 /*
  * $Log: bounce.c,v $
- * Revision 1.1  1995/12/14 15:23:30  tjd
+ * Revision 1.2  1996/01/02 00:28:11  tjd
+ * added defug code to check for null userlist
+ *
+ * Revision 1.1  1995/12/14  15:23:30  tjd
  * Initial revision
  *
  */
@@ -29,5 +32,10 @@ int bounce(userlist users[],bounce_reason fail_all)
 			ret++;
 		}
 	}
+#ifdef ERROR_MESSAGES
+	if(!i)
+		fprintf(stderr,"Warning: bounce() called with no users\n");
+#endif
+
 	return ret;
 }
