@@ -1,5 +1,8 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.10  1997/11/24 22:44:01  tjd
+ * slight formatting change with Message-Id
+ *
  * Revision 1.9  1997/11/24 22:39:54  tjd
  * made the From: header get tweaked by TWEAK_FROMADDR as well
  *
@@ -118,8 +121,8 @@ int main(int argc, char *argv[])
 	utime=time(NULL);
 	ltime = localtime(&utime);
 	sprintf(p,"Received: from local (localhost)\r\n"
-		  "          by %s (mailer 1.3a) with SMTP;\r\n"
-		  "          %s\r\n",host,longdate);
+		  "\tby %s (mailer 1.3b) with SMTP;\r\n"
+		  "\t%s\r\n",host,longdate);
 	p+=strlen(p);
 	sprintf(p,"Date: %s\r\n",longdate);
 	p+=strlen(p);
