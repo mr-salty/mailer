@@ -1,5 +1,10 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.12  1998/04/21 04:24:21  tjd
+ * add time(NULL) back in to message-id, otherwise 2 mailings in the same
+ * day will have duplicate ID's.  Now we just can't mail 2 in the same
+ * second, which shouldn't be a problem...
+ *
  * Revision 1.11  1998/04/17 00:37:10  tjd
  * changed config file format
  * added config flags and associated definitions
@@ -136,7 +141,7 @@ int main(int argc, char *argv[])
 	 * be careful about changing these (see do_list.c)
 	 */
 
-	sprintf(idtag,"%s.%04d%02d%02d.%c%s", HEADER_HEADER,
+	sprintf(idtag,"%s.%d.%04d%02d%02d.%c%s", HEADER_HEADER, (int) utime,
 		ltime->tm_year+1900, ltime->tm_mon+1, ltime->tm_mday,
 		'\xff',"00000.000");
 #endif /* USE_IDTAGS */
