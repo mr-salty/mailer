@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.40  2004/02/08 16:36:40  tjd
+ * if OPEN_MAX does not exist, use getrlimit to find the max # of open files
+ *
  * Revision 1.39  1999/09/07 15:53:05  tjd
  * change date format in mailer.status to avoid making the line >80 chars
  *
@@ -142,8 +145,10 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <errno.h>
@@ -543,7 +548,21 @@ retryfork:
 			handle_child();
 			goto retryfork;
 		case 0:
+#if defined(OPEN_MAX)
 			for(i=0;i<OPEN_MAX;++i) close(i);
+#else
+			{
+			    struct rlimit rl;
+			    if (getrlimit(RLIMIT_NOFILE, &rl) < 0)
+			    {
+				perror("getrlimit(RLIMIT_NOFILE), using 1024");
+				rl.rlim_max = 1024;
+			    }
+			    for(i=0;i<rl.rlim_max;++i) close(i);
+			    
+			}
+#endif
+
 #if defined(USE_IDTAGS) && defined(TWEAK_FROMADDR)
 			/* make deliver() use our tweaked from address */
 			mailfrom = msg_from;
