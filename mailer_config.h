@@ -1,5 +1,9 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.9  1996/04/23 03:56:11  tjd
+ * mode ADDS_PER_BUF 64 to cater to msn.com's broken SMTP.
+ * (see rfc821, 4.5.3. SIZES)
+ *
  * Revision 1.8  1996/04/16 14:58:58  tjd
  * tuned the scheduler; we now have a TARGET_RATE and the scheduler
  * dynamically adapts to try to meet it.
@@ -54,7 +58,11 @@
 #define MAX_ADDR_LEN    256	/* single address size limit: RFC821 */
 #define MAX_LINE_LEN	1024	/* single message line limit: RFC821 */
 #define MAX_HOSTNAME_LEN 64	/* hostname limit: RFC821 */
+#if 0
 #define ADDRS_PER_BUF   100	/* max # of addresses per buffer: RFC821 */
+#else
+#define ADDRS_PER_BUF   64	/* msn.com won't take 100 though it should! */
+#endif
 #define BUFFER_LEN   	4096	/* single delivery attempt buffer */
 
 /* scheduler parameters */
