@@ -1,5 +1,9 @@
 /*
  * $Log: mailer.c,v $
+ * Revision 1.4  1998/09/30 21:45:42  tjd
+ * make mailer become leader of its own session and pgrp
+ * bump version to 1.6
+ *
  * Revision 1.3  1998/02/17 16:28:52  tjd
  * added skip_addrs function
  *
@@ -13,6 +17,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "mailer_config.h"
 
 /* mailer listfile message_file from@host [path to mpp] */
@@ -30,12 +37,32 @@ void usage(char *prog)
 
 int main(int argc, char *argv[])
 {
+	int status;
+
 	if(argc != 4 && argc != 5) usage(argv[0]);
 
 	if(!(myhostname=strrchr((mailfrom=argv[3]),'@'))) usage(argv[0]);
 	myhostname++;
 
 	readmessage(argv[2], (argc==4 ? MPP : argv[4]));
+
+	/* become a process group and session leader */
+	switch(fork()) {
+	    case -1:
+		perror("fork");
+		exit(1);
+	
+	    case 0:	/* child continues */
+		break;
+
+	    default:	/* parent waits for the child */
+		wait(&status);
+		exit WEXITSTATUS(status);
+	}
+
+	if(setsid() == -1) {
+	    perror("setsid");
+	}
 
 	do_list(argv[1]);
 	return 0;

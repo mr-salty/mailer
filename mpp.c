@@ -1,5 +1,9 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.15  1998/09/30 21:45:42  tjd
+ * make mailer become leader of its own session and pgrp
+ * bump version to 1.6
+ *
  * Revision 1.14  1998/04/21 13:35:08  tjd
  * bump version to 1.5
  *
@@ -157,7 +161,7 @@ int main(int argc, char *argv[])
 
 	/* received header */
 	sprintf(p,"Received: from local (localhost)\r\n"
-		  "\tby %s (mailer 1.5) with SMTP", host);
+		  "\tby %s (mailer 1.6) with SMTP", host);
 	p+=strlen(p);
 #if defined(USE_IDTAGS) && defined(TWEAK_RCVHDR)
 	sprintf(p," id <%s>", idtag);
