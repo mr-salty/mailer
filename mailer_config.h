@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.12  1996/05/04 18:25:26  tjd
+ * made DEBUG_SMTP defined by default.
+ *
  * Revision 1.11  1996/05/02 22:52:59  tjd
  * removing dependencies on sendmail header files.
  * sendmail.h is now the only one and only needed by domain.c
@@ -43,7 +46,7 @@
 
 #define STATUS	100	/* status every n messages */
 
-#undef DEBUG_SMTP	/* SMTP deliver() debugging */
+#define DEBUG_SMTP	/* SMTP deliver() debugging */
 #undef NO_FORK		/* useful to debug deliver() */
 #undef NO_DELIVERY	/* fake delivery if defined */
 #undef ERROR_MESSAGES 	/* generate error messages */
