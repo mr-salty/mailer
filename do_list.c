@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.25  1997/08/14 16:01:43  tjd
+ * added TWEAK_MSGID stuff
+ *
  * Revision 1.24  1997/07/08 02:15:43  tjd
  * scheduler tweak.
  *
@@ -110,6 +113,11 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host);
 static void do_delivery(),do_status(),setup_signals(),schedule();
 static int handle_child();
 
+#if defined(TWEAK_MSGID)
+extern char *messagebody;
+static char *idptr;
+#endif
+
 void do_list(char *fname)
 {
 	FILE *f;
@@ -132,6 +140,11 @@ void do_list(char *fname)
 
 	do_status();
 	setup_signals();
+
+#if defined(TWEAK_MSGID)
+	/* mpp puts this here for us.  '\xff'00000 */
+	idptr=index(messagebody,'\xff');
+#endif
 
 	/* main loop.
 	 * next holds next empty buffer position
@@ -337,6 +350,17 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host)
 static void do_delivery()
 {
 	int i;
+
+#if defined(TWEAK_MSGID)
+	static int batch_id = 1;
+	char buf[7];
+
+	if(batch_id > 999999) batch_id=999999;	/* should never happen */
+	sprintf(buf,"%06d", batch_id);
+	memcpy(idptr, buf, 6);
+	batch_id = numprocessed;
+#endif
+
 #ifndef NO_FORK
 	schedule();	/* blocks until we can start another */
 
@@ -461,6 +485,7 @@ static void do_status()
 	else
 	{
 		diff=now-start;
+		if(diff==0) diff=1;	/* avoid div by zero */
 
 		h=diff/3600;
 		m=(diff%3600)/60;

@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.14  1997/08/14 15:10:13  tjd
+ * added TWEAK_MSGID
+ *
  * Revision 1.13  1996/05/04 20:51:04  tjd
  * but def for memmove() for sun at the end.
  *
@@ -50,6 +53,10 @@
 #define STATUS	100	/* status every n messages */
 
 #define DEBUG_SMTP	/* SMTP deliver() debugging */
+
+#define DEBUG_SMTP_SELECTIVE	/* use list of hosts to debug */
+#define DEBUG_SMTP_LIST "mailer.debug_hosts"	/* file of hosts to debug */
+
 #undef NO_FORK		/* useful to debug deliver() */
 #undef NO_DELIVERY	/* fake delivery if defined */
 #undef ERROR_MESSAGES 	/* generate error messages */
@@ -66,11 +73,14 @@
  */
 #undef NULL_RETURN_PATH
 
+/* this will embed the current address number in the message-id */
+#define TWEAK_MSGID
+
 /* list processing parameters */
 #define MAX_ADDR_LEN    256	/* single address size limit: RFC821 */
 #define MAX_LINE_LEN	1024	/* single message line limit: RFC821 */
 #define MAX_HOSTNAME_LEN 64	/* hostname limit: RFC821 */
-#if 0
+#if 1
 #define ADDRS_PER_BUF   100	/* max # of addresses per buffer: RFC821 */
 #else
 #define ADDRS_PER_BUF   64	/* msn.com won't take 100 though it should! */
@@ -81,7 +91,7 @@
 /* scheduler parameters */
 #define MAX_CHILD	90	/* max # of deliver children */
 #define MIN_CHILD	15	/* min # of deliver children */
-#define TARGET_RATE	6500	/* target rate in deliveries per hour */
+#define TARGET_RATE	10000	/* target rate in deliveries per hour */
 
 /* SMTP: timeouts as defined in RFC1123 */
 #define CONNECT_TIMEOUT		300	/* timeout for tcp connect() */

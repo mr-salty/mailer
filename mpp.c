@@ -1,5 +1,8 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.5  1997/08/14 16:01:52  tjd
+ * added TWEAK_MSGID stuff
+ *
  * Revision 1.4  1996/08/06 15:42:23  tjd
  * changed order of headers per 822 4.1
  *
@@ -87,8 +90,15 @@ int main(int argc, char *argv[])
 	p+=strlen(p);
 	sprintf(p,"Date: %s\r\n",arpadate(NULL));
 	p+=strlen(p);
-	sprintf(p,"Message-Id: <%s.%d.%d@%s>\r\n",
-			HEADER_HEADER,(int)time(NULL),rand(),argv[3]);
+	sprintf(p,"Message-Id: <%s.%d.%d%s@%s>\r\n",
+			HEADER_HEADER,(int)time(NULL),rand(),
+#ifdef TWEAK_MSGID
+			".\xff""00000",
+#else
+			"",
+#endif
+			argv[3]);
+
 	p+=strlen(p);
 
 	while(fgets(line,MAX_LINE_LEN+1,f))
