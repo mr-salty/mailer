@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.34  1998/03/03 17:59:06  tjd
+ * if fork() fails, sleep for a bit before retrying.
+ *
  * Revision 1.33  1998/03/02 23:57:19  tjd
  * fixed bug with status reporting and delivery rate calculation when skipping
  * addresses.
@@ -459,6 +462,7 @@ retryfork:
 #ifdef ERROR_MESSAGES
 			perror("fork");
 #endif
+			sleep(3);
 			goto retryfork;
 		case 0:
 			for(i=0;i<OPEN_MAX;++i) close(i);
