@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.15  1996/05/02 22:12:59  tjd
+ * removed some old signal code.
+ *
  * Revision 1.14  1996/05/02 22:09:55  tjd
  * removed DEBUG, DEBUG_FORK
  *
@@ -139,20 +142,6 @@ void do_list(char *fname)
 	int inbuf,tmplen,wait_timeout,i;
 	char *current,*start,*next,*user,*tmphost,*p;
 
-#if 0
-	struct sigaction sa;
-
-	sa.sa_handler=handle_child;
-	sigfillset(&sa.sa_mask);
-	sa.sa_flags=SA_RESTART;
-	sa.sa_restorer=NULL;
-
-	if(sigaction(SIGCHLD,sa,NULL) == -1)
-	{
-		perror("sigaction");
-		exit(1);
-	}
-#endif
 	/* catch all signals not named */
 
 	for(i=1;i<NSIG;++i)
