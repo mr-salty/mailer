@@ -1,5 +1,8 @@
 /*
  * $Log: readmessage.c,v $
+ * Revision 1.4  1996/03/04 04:03:22  tjd
+ * changed PATH_MAX to MAXPATHLEN for filename buffer
+ *
  * Revision 1.3  1996/02/15 04:09:05  tjd
  * no longer exec mpp through a pipe, but we use a temp file instead
  * this in preparation for mmap()ing the message
@@ -19,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
@@ -36,7 +40,7 @@ static void failmpp(char *message)
 
 void readmessage(char *filename,char *mpp)
 {
-	char cmd[PATH_MAX];
+	char cmd[MAXPATHLEN];
 	char outfname[80];
 	struct stat sbuf;
 	int fd;
