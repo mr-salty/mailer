@@ -1,5 +1,9 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.28  1997/11/24 00:37:32  tjd
+ * small tweak to msgid, it now contains the batchsize as the last
+ * component.
+ *
  * Revision 1.27  1997/10/11 07:31:55  tjd
  * make sure that the parameters don't get set to -1 (!)
  *
@@ -114,7 +118,7 @@ static userlist users[ADDRS_PER_BUF+1];	  /* +1 for null marker at end */
 
 static int numchildren=0,delivery_rate=TARGET_RATE;
 static int numforks=0,numprocessed=0,numfailed=0;
-static int list_line = 0, batch_id = 0;
+static int list_line = 0, batch_id = 0, batch_size = 0;
 static int max_child,min_child,target_rate;
 
 int deliver(char *hostname,userlist users[],int do_debug);
@@ -159,7 +163,7 @@ void do_list(char *fname)
 	setup_signals();
 
 #if defined(TWEAK_MSGID)
-	/* mpp puts this here for us.  '\xff'00000 */
+	/* mpp puts this here for us.  '\xff'00000.000 */
 	idptr=index(messagebody,'\xff');
 #endif
 
@@ -189,6 +193,7 @@ void do_list(char *fname)
 		    if(inbuf) {
 		        /* deliver what we have */
 			users[inbuf].addr=NULL;
+			batch_size=inbuf;
 			do_delivery(debug_flag);
 
 			/* copy current entry to the start of the buffer
@@ -219,6 +224,7 @@ void do_list(char *fname)
 		   feof(f))
 		{
 			users[inbuf].addr=NULL;
+			batch_size=inbuf;
 			do_delivery(debug_flag);
 			inbuf=0;
 			next=buf;
@@ -232,6 +238,7 @@ void do_list(char *fname)
 	if(inbuf)
 	{
 		users[inbuf].addr=NULL;
+		batch_size=inbuf;
 		do_delivery(debug_flag);
 	}
 
@@ -376,11 +383,12 @@ static void do_delivery(int debug_flag)
 	int i;
 
 #if defined(TWEAK_MSGID)
-	char buf[7];
+	char buf[11];
 
 	if(batch_id > 999999) batch_id=999999;	/* should never happen */
-	sprintf(buf,"%06d", batch_id);
-	memcpy(idptr, buf, 6);
+	if(batch_size > 999) batch_size=999;	/* should never happen */
+	sprintf(buf,"%06d.%03d", batch_id, batch_size);
+	memcpy(idptr, buf, 10);
 #endif
 
 #ifndef NO_FORK
@@ -749,7 +757,7 @@ static int get_config_entry(char *host, int *debug_flag)
 	*debug_flag = (e->debug != 0);
     }
 
-    if(batch <= 0) {
+    if(batch <= 0 || batch > ADDRS_PER_BUF) {
 	batch = ADDRS_PER_BUF;	/* default batchsize */
     }
 

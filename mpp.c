@@ -1,5 +1,9 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.7  1997/11/24 00:37:32  tjd
+ * small tweak to msgid, it now contains the batchsize as the last
+ * component.
+ *
  * Revision 1.6  1997/10/11 07:07:05  tjd
  * bumped version to 1.1a
  * also removed the 'rand' in the message id and replaced it with the date
@@ -104,7 +108,7 @@ int main(int argc, char *argv[])
 			HEADER_HEADER,(int)time(NULL),
 			ltime->tm_year+1900, ltime->tm_mon+1, ltime->tm_mday,
 #ifdef TWEAK_MSGID
-			".\xff""00000",
+			".\xff""00000.000",
 #else
 			"",
 #endif
