@@ -1,5 +1,11 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.19  1996/05/04 20:50:17  tjd
+ * major code restructuring:
+ * moved parsing code to parse_address
+ * moved scheduler to schedule()
+ * misc fixups.
+ *
  * Revision 1.18  1996/05/04 18:41:27  tjd
  * STATUS is no longer optional, it must be defined.
  * also minor cleanups.
@@ -74,20 +80,333 @@
 #include "mailer_config.h"
 #include "userlist.h"
 
-int deliver(char *hostname,userlist users[]);
-void bounce_user(char *addr,bounce_reason why,int statcode);
-void handle_sig(int sig);
-
 static char curhost[MAX_HOSTNAME_LEN+1];  /* +1 for null */
 static char buf[BUFFER_LEN+1];		  /* +1 for temp newline (null) */
 static userlist users[ADDRS_PER_BUF+1];	  /* +1 for null marker at end */
 
-static int numchildren=0,child_limit=MIN_CHILD,delivery_rate=TARGET_RATE;
-
-static void do_delivery();
-static void handle_child();
-
+static int numchildren=0,delivery_rate=TARGET_RATE;
 static int numforks=0,numprocessed=0,numfailed=0;
+
+int deliver(char *hostname,userlist users[]);
+void bounce_user(char *addr,bounce_reason why,int statcode);
+void handle_sig(int sig),signal_backend();
+static int parse_address(FILE *f, char **abuf, char **start, char **host);
+static void do_delivery(),do_status(),setup_signals(),schedule();
+static int handle_child();
+
+void do_list(char *fname)
+{
+	FILE *f;
+
+	int inbuf,hostlen,wait_timeout,fd,next_status=STATUS;
+	char *next,*addr,*host;
+
+	if(!(f=fopen(fname,"r")))
+	{
+		perror("Can't open list file");
+		exit(1);
+	}
+
+	if((fd=open(BOUNCE_FILE,O_CREAT|O_TRUNC|O_WRONLY,0666)) == -1)
+	{
+		perror("Can't create bounce file");
+		exit(1);
+	}
+	close(fd);
+
+	do_status();
+	setup_signals();
+
+	/* main loop.
+	 * next holds next empty buffer position
+	 * addr points to start of current address
+	 * host points to start of hostname of current address
+	 * hostlen is the length of the hostname
+	 */
+	next=buf;
+	inbuf=0;
+
+	while((hostlen=parse_address(f,&next,&addr,&host)))
+	{
+		if(numprocessed > next_status)
+		{
+			do_status();
+			next_status+=STATUS;
+		}
+
+		if(!inbuf)	/* empty buffer */
+		{
+			strncpy(curhost,host,hostlen);
+			curhost[hostlen]='\0';
+		}
+		else
+		{
+			if(strncasecmp(curhost,host,hostlen))
+			{	
+				/* new host.  deliver what we have,
+				 * then copy current entry to start of buffer.
+				 */
+
+				users[inbuf].addr=NULL;
+				do_delivery();
+
+				memmove(buf,addr,(next-addr));
+				strncpy(curhost,host,hostlen);
+				curhost[hostlen]='\0';
+				users[0].addr=buf;
+				inbuf=1;
+				next=buf+(next-addr);
+				continue;
+			}
+		}
+
+		users[inbuf++].addr=addr;
+
+		if(inbuf == ADDRS_PER_BUF ||
+		   (next-buf) >= (BUFFER_LEN-MAX_ADDR_LEN) ||
+		   feof(f))
+		{
+			users[inbuf].addr=NULL;
+			do_delivery();
+			inbuf=0;
+			next=buf;
+		}
+	}
+
+	/* out of the loop, we're done with the list.
+         * however, we could still have some addresses to deliver to.
+	 */
+
+	if(inbuf)
+	{
+		users[inbuf].addr=NULL;
+		do_delivery();
+	}
+
+	do_status();
+
+	/* loop and wait for the children to exit.  */
+	wait_timeout=0;
+	while(numchildren && ++wait_timeout < 720) /* wait an hour */
+	{
+		sleep(5);
+		handle_child();
+	}
+	do_status();
+
+	if(numchildren)
+		fprintf(stderr,"WARNING: %d children did not exit!\n",numchildren);
+	fclose(f);
+}
+
+/* reads the file and parses the addresses.
+ * input: file pointer, pointer to buffer.
+ * returns: 0 if no more addresses, non-zero otherwise
+ * also returns:	pointer to start of address,
+ * 			pointer to hostname
+ *			length of hostname (return value)
+ * and advances abuf past NULL at end of current address.
+ */
+
+static int parse_address(FILE *f, char **abuf, char **start, char **host)
+{
+	char *p,*a_buf,*a_start,*a_end,*a_host;	/* temporary pointers */
+	int hostlen;
+
+	a_buf=*abuf;
+	while(1)
+	{
+		if(!fgets(a_buf,MAX_ADDR_LEN+2,f))	/* no more addresses */
+			return 0;
+
+		++numprocessed;
+		a_start=a_buf;
+
+		/* find the end of the address */
+		p=a_buf+strlen(a_buf)-1;
+
+		/* see if we have a newline at the end, and replace it
+		 * with a null.  If we don't have a newline the address
+		 * was too long, so we skip it.
+		 */
+
+		if(*p != '\n') {
+			char c;
+			bounce_user(a_start,long_addr,0);
+			numfailed++;
+			while((c=fgetc(f)) != '\n') { 
+				if(feof(f))
+					return 0;	
+			}
+			continue;
+		}
+
+		/* strip trailing whitespace */
+		while(isspace(*p) && p>=a_buf) --p;
+
+		++p;
+		if(p==a_buf) {				/* blank line */
+			numprocessed--;
+			continue;
+		}
+
+		/* strip leading whitespace */
+		*p='\0';
+		a_end=p;
+		while(isspace(*a_start)) ++a_start;
+
+		/* at this point:
+		 * a_start points to the start of the address
+		 * a_end points to the null at the end of the address
+		 * we parse the address, and set a_host to point to the
+		 * hostname, hostlen to be its length.
+		 */
+
+		/* check for source routed path */
+		if(*a_start=='@')
+		{
+			a_host=a_start+1;	/* discard @ */
+
+			if(!(p=strchr(a_start,':'))) /* check for : */
+			{
+				bounce_user(a_start,bad_addr,0);
+				numfailed++;
+				continue;
+			}
+			/* path continues either until the : or a , */
+
+			p=strpbrk(a_start,",:");	/* can't return NULL */
+			hostlen=p-a_host;	/* save length of host part */
+		}
+		else
+		{
+			/* user@host:
+			 * find the '@' to split into user/host.
+			 * host points at the host part.
+			 */
+
+			if(!(a_host=strrchr(a_start,'@')))
+			{
+				bounce_user(a_start,bad_addr,1);
+				numfailed++;
+				continue;
+			}
+
+			++a_host;
+			hostlen=a_end-a_host;
+		}
+
+		if(hostlen>MAX_HOSTNAME_LEN)
+		{
+			bounce_user(a_start,long_host,hostlen);
+			numfailed++;
+			continue;
+		}
+		if(!hostlen)
+		{
+			bounce_user(a_start,bad_addr,2);
+			numfailed++;
+			continue;
+		}
+		break;	/* got a valid address */
+	}
+	/* copy return values and exit */
+	*start=a_start; *host=a_host; *abuf=a_end+1;
+	return hostlen;
+}
+
+/* forks and calls deliver() to deliver the messages.
+ */
+
+static void do_delivery()
+{
+#ifndef NO_FORK
+	schedule();	/* blocks until we can start another */
+
+retryfork:
+	switch(fork())
+	{
+		case -1:
+#ifdef ERROR_MESSAGES
+			perror("fork");
+#endif
+			goto retryfork;
+		case 0:
+			exit(deliver(curhost,users));
+
+		default:
+			numforks++;
+			numchildren++;
+	}
+#else /* NO_FORK */
+	numfailed+=deliver(curhost,users);
+#endif /* NO_FORK */
+}
+
+/* waits for children and returns the number that have exited */
+static int handle_child()
+{
+	int w,status,numexited=0;
+
+	while((w=waitpid(-1,&status,WNOHANG)) > 0)
+	{	
+		numchildren--; numexited++;
+		if(WIFEXITED(status))
+			numfailed+=WEXITSTATUS(status);
+#ifdef ERROR_MESSAGES
+		if(WIFSIGNALED(status))
+			fprintf(stderr,"Warning: child exited on signal %d\n",WTERMSIG(status));
+#endif
+	}
+#ifdef ERROR_MESSAGES
+	if(w==-1 && errno != ECHILD) perror("waitpid");
+#endif
+	return numexited;
+}
+
+/* returns when it's ok to start another child process.
+ */
+
+static void schedule()
+{
+	static int child_limit=MIN_CHILD;
+	static int mc_factor=1;	
+	int numexited;
+
+	while(numchildren >= child_limit)
+	{
+		sleep(2);
+		numexited=handle_child();
+
+		/* mc_factor is a scheduling parameter that controls how
+		 * likely we are to start a new child.  We try to
+		 * keep within 5% of our target.
+		 */
+
+		if(delivery_rate < (int)(0.95 * TARGET_RATE))
+			mc_factor=2;
+		else if(delivery_rate > (int)(1.05 * TARGET_RATE))
+			mc_factor=0;
+		else
+			mc_factor=1;
+
+		/* we want an average of 1 child every 2 seconds, so we
+		 * try to make that happen.
+		 */
+
+		if(numexited==0) {
+			child_limit++;
+			if(child_limit > MAX_CHILD) child_limit=MAX_CHILD;
+		}
+		else if(numexited <= mc_factor) {
+			/* do nothing */
+			}
+		else {
+			child_limit--;
+			if(child_limit < MIN_CHILD) child_limit=MIN_CHILD;
+		}
+	}
+}
 
 static void do_status()
 {
@@ -140,7 +459,7 @@ void signal_backend()
 	exit(1);
 }
 
-void setup_signals()
+static void setup_signals()
 {
 	int i;
 
@@ -171,274 +490,4 @@ void setup_signals()
 				break;
 		}
 	}
-}
-
-void do_list(char *fname)
-{
-	FILE *f;
-
-	int inbuf,tmplen,wait_timeout,i;
-	char *current,*start,*next,*user,*tmphost,*p;
-
-	if(!(f=fopen(fname,"r")))
-	{
-		perror("Can't open list file");
-		exit(1);
-	}
-
-	if((i=open(BOUNCE_FILE,O_CREAT|O_TRUNC|O_WRONLY,0666)) == -1)
-	{
-		perror("Can't create bounce file");
-		exit(1);
-	}
-	close(i);
-
-	do_status();
-	setup_signals();
-
-	/* main loop */
-	next=buf;
-	inbuf=0;
-
-	while(fgets(next,MAX_ADDR_LEN+2,f))	/* newline + null */
-	{
-		if(!(++numprocessed % STATUS))
-		{
-			do_status();
-		}
-
-		/* this is tricky.  everything is really in buf.
-		 * next points to where we just read the address.
-		 */
-
-		current=start=next;
-
-		/* find the end of the address */
-		p=next+strlen(next)-1;
-
-		/* see if we have a newline at the end, and replace it
-		 * with a null.  If we don't have a newline the address
-		 * was too long, so we skip it.
-		 */
-
-		if(*p != '\n') {
-			char c;
-			bounce_user(start,long_addr,0);
-			numfailed++;
-			while((c=fgetc(f)) != '\n') { 
-				if(feof(f))
-				break;
-			}
-			next=current;
-			continue;
-		}
-
-		while(isspace(*p) && p>=next) --p;	/* strip whitespace */
-
-		++p;
-		if(p==next) {				/* blank line */
-			numprocessed--;
-			continue;
-		}
-		*p='\0';
-		next=p+1;
-		while(isspace(*start)) ++start;
-
-		/* check for source routed path */
-		if(*start=='@')
-		{
-			user=start;
-			tmphost=start+1;	/* discard @ */
-
-			if(!(p=strchr(start,':')))
-			{
-				bounce_user(start,bad_addr,0);
-				numfailed++;
-				next=current;
-				continue;
-			}
-			/* path continues either until the : or a , */
-
-			p=strpbrk(start,",:");	/* can't return NULL */
-			tmplen=p-tmphost;	/* save length of host part */
-		}
-		else
-		{
-			/* user@host:
-			 * find the '@' to split into user/host.
-			 * tmphost points at the host part.
-			 */
-
-			user=start;
-
-			if(!(tmphost=strrchr(start,'@')))
-			{
-				bounce_user(start,bad_addr,1);
-				numfailed++;
-				next=current;
-				continue;
-			}
-
-			++tmphost;
-			tmplen=(next-tmphost)-1;
-		}
-
-		if(tmplen>MAX_HOSTNAME_LEN)
-		{
-			bounce_user(start,long_host,tmplen);
-			numfailed++;
-			next=current;
-			continue;
-		}
-
-		if(!inbuf)	/* new host */
-		{
-			strncpy(curhost,tmphost,tmplen);
-			curhost[tmplen]='\0';
-		}
-		else
-		{
-			if(strncasecmp(curhost,tmphost,tmplen))
-			{
-				char *save;
-				int savelen,hostpos,userpos;
-
-				/* new host, deliver and save this one */
-				users[inbuf].addr=NULL;
-				save=start;
-				savelen=next-start;
-				hostpos=tmphost-start;
-				userpos=user-start;
-				
-				do_delivery();
-#ifdef sun
-				bcopy(save,buf,savelen+1);
-#else
-				memmove(buf,save,savelen+1);
-#endif
-				strncpy(curhost,buf+hostpos,tmplen);
-				curhost[tmplen]='\0';
-				users[0].addr=buf+userpos;
-				inbuf=1;
-				next=buf+savelen;
-				continue;
-			}
-		}
-
-		users[inbuf++].addr=user;
-
-		if(inbuf == ADDRS_PER_BUF ||
-		   (next-buf) >= (BUFFER_LEN-MAX_ADDR_LEN) ||
-		   feof(f))
-		{
-			users[inbuf].addr=NULL;
-			do_delivery();
-			inbuf=0;
-			next=buf;
-		}
-	}
-
-	/* out of the loop, we're done!!!
-         * if we exited from the top of the loop, we could still have
-	 * some addresses to deliver to.
-	 */
-
-	if(inbuf)
-	{
-		users[inbuf].addr=NULL;
-		do_delivery();
-	}
-
-	do_status();
-
-	/* loop and wait for the children to exit.  */
-	wait_timeout=0;
-	while(numchildren && ++wait_timeout < 720) /* wait an hour */
-	{
-		sleep(5);
-		handle_child();
-	}
-	do_status();
-
-	if(numchildren)
-		fprintf(stderr,"WARNING: %d children did not exit!\n",numchildren);
-}
-
-static void do_delivery()
-{
-	while(numchildren >= child_limit)
-	{
-		int old_numch=numchildren;
-		int mc_factor=1;
-
-		sleep(2);
-		handle_child();
-
-		/* mc_factor is a scheduling parameter that controls how
-		 * likely we are to start a new child.  We try to
-		 * keep within 10% of our target.
-		 */
-
-		if(delivery_rate < (int)(0.95 * TARGET_RATE))
-			mc_factor=2;
-		else if(delivery_rate > (int)(1.05 * TARGET_RATE))
-			mc_factor=0;
-		else
-			mc_factor=1;
-
-		/* this is the "scheduler".
-		 * we want an average of 1 child every 2 seconds, so we
-		 * try to make that happen.
-		 */
-		if(old_numch==numchildren) {
-			child_limit++;
-			if(child_limit > MAX_CHILD) child_limit=MAX_CHILD;
-		}
-		else if(old_numch-mc_factor <= numchildren) {
-			/* do nothing */
-		}
-		else {
-			child_limit--;
-			if(child_limit < MIN_CHILD) child_limit=MIN_CHILD;
-		}
-	}
-
-#ifndef NO_FORK
-retryfork:
-	switch(fork())
-	{
-		case -1:
-#ifdef ERROR_MESSAGES
-			perror("fork");
-#endif
-			goto retryfork;
-		case 0:
-			exit(deliver(curhost,users));
-
-		default:
-			numforks++;
-			numchildren++;
-	}
-#else /* NO_FORK */
-	numfailed+=deliver(curhost,users);
-#endif /* NO_FORK */
-}
-
-static void handle_child()
-{
-	int w,status;
-
-	while((w=waitpid(-1,&status,WNOHANG)) > 0)
-	{	
-		numchildren--; 
-		if(WIFEXITED(status))
-			numfailed+=WEXITSTATUS(status);
-#ifdef ERROR_MESSAGES
-		if(WIFSIGNALED(status))
-			fprintf(stderr,"Warning: child exited on signal %d\n",WTERMSIG(status));
-#endif
-	}
-#ifdef ERROR_MESSAGES
-	if(w==-1 && errno != ECHILD) perror("waitpid");
-#endif
 }
