@@ -32,6 +32,9 @@
  * SUCH DAMAGE.
  *
  * $Log: arpadate.c,v $
+ * Revision 1.3  1996/05/02 22:54:31  tjd
+ * cleanups.
+ *
  * Revision 1.2  1996/01/01 22:05:30  tjd
  * added unistd.h for NULL on sun
  *
@@ -40,13 +43,6 @@
  *
  */
 
-#if 0
-#ifndef lint
-static char sccsid[] = "@(#)arpadate.c	8.1 (Berkeley) 6/7/93";
-#endif /* not lint */
-#endif
-
-/* # include "sendmail.h" */
 #include <unistd.h>
 #include <sys/time.h>
 
