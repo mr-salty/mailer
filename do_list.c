@@ -1,5 +1,9 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.37  1999/08/11 04:48:29  tjd
+ * fix a bug where the parent would get stuck in a loop if we ran out of
+ * processes.  now we call handle_child() in that case to reap zombies.
+ *
  * Revision 1.36  1998/09/29 13:44:12  tjd
  * clean up handling when children do not exit at the end
  *
@@ -530,6 +534,7 @@ retryfork:
 			perror("fork");
 #endif
 			sleep(3);
+			handle_child();
 			goto retryfork;
 		case 0:
 			for(i=0;i<OPEN_MAX;++i) close(i);
