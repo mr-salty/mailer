@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.36  1998/09/29 13:44:12  tjd
+ * clean up handling when children do not exit at the end
+ *
  * Revision 1.35  1998/04/17 00:37:10  tjd
  * changed config file format
  * added config flags and associated definitions
@@ -342,9 +345,18 @@ void do_list(char *fname)
 	}
 	do_status();
 
-	if(numchildren)
-		fprintf(stderr,"WARNING: %d children did not exit!\n",numchildren);
 	fclose(f);
+
+	if(numchildren) {
+		fprintf(stderr,"WARNING: %d children did not exit!\n",
+			numchildren);
+
+		/* call signal_backend as if we got SIGTERM - this will make
+		 * it clean up.
+		 */
+		signal_backend(SIGTERM);
+		/* doesn't return */
+	}
 }
 
 /* reads the file and parses the addresses.
@@ -671,7 +683,7 @@ void signal_backend(int sig)
 	    	fprintf(stderr,"Sending signal %d to all children...\n", sig);
 		signal(sig,SIG_IGN);
 		kill(0, sig);
-		sleep(5);
+		sleep(10);
 		handle_child();
 
 		if(numchildren) {
