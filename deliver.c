@@ -1,6 +1,9 @@
 /*
  * $Log: deliver.c,v $
- * Revision 1.4  1995/12/31 20:14:42  tjd
+ * Revision 1.5  1996/01/02 00:29:11  tjd
+ * added signal handling code
+ *
+ * Revision 1.4  1995/12/31  20:14:42  tjd
  * added 550/551/generic user unknown indication
  *
  * Revision 1.3  1995/12/27 18:56:45  tjd
@@ -46,6 +49,25 @@ static int delivermessage(char *addr,char *hostname, userlist users[]);
 static int lookfor(int s,int code,int alarmtime);
 static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,int timeout);
 
+static int in_child=0;
+extern void signal_backend();
+static userlist *gl_users=NULL;
+
+void handle_sig(int sig)
+{
+	if(in_child)
+	{
+		fprintf(stderr,"Warning: pid %d caught signal %d, failing.\n",getpid(),sig);
+		exit(bounce(gl_users,caught_signal));
+	}
+	else
+	{
+		fprintf(stderr,"FATAL: parent mailer caught signal %d, exiting.\n",sig);
+		signal_backend();
+		exit(1);
+	}
+}
+
 /* finds all the mx records and tries to deliver the message */
 
 int deliver(char *hostname,userlist users[])
@@ -54,10 +76,12 @@ int deliver(char *hostname,userlist users[])
 	int nmx,rcode,i,p,deliver_status=0;
 	
 	char *mxhosts[MAXMXHOSTS+1];
+	in_child=1;
+	gl_users=users;
 #ifdef ERROR_MESSAGES
 	hostname2=hostname;
 #endif
-	
+
 	nmx=getmxrr(hostname,mxhosts,FALSE,&rcode);
 
 	if (nmx<=0)

@@ -1,6 +1,9 @@
 /* 
  * $Log: do_list.c,v $
- * Revision 1.5  1996/01/01 22:04:19  tjd
+ * Revision 1.6  1996/01/02 00:29:11  tjd
+ * added signal handling code
+ *
+ * Revision 1.5  1996/01/01  22:04:19  tjd
  * changed memmove() to bcopy() for sun
  *
  * Revision 1.4  1995/12/28  18:09:01  tjd
@@ -33,6 +36,7 @@
 
 int deliver(char *hostname,userlist users[]);
 void bounce_user(char *addr,bounce_reason why);
+void handle_sig(int sig);
 
 static char curhost[MAX_HOSTNAME_LEN+1];  /* +1 for null */
 static char buf[BUFFER_LEN+1];		  /* +1 for temp newline (null) */
@@ -92,11 +96,19 @@ static void do_status()
 }
 #endif
 
+void signal_backend()
+{
+#ifdef STATUS
+	do_status();
+#endif
+	exit(1);
+}
+
 void do_list(char *fname)
 {
 	FILE *f;
 
-	int inbuf,tmplen,wait_timeout;
+	int inbuf,tmplen,wait_timeout,i;
 	char *current,*start,*next,*user,*tmphost,*p;
 
 #if 0
@@ -113,6 +125,33 @@ void do_list(char *fname)
 		exit(1);
 	}
 #endif
+	/* catch all signals not named */
+
+	for(i=1;i<NSIG;++i)
+	{
+		switch(i) {
+			case SIGKILL: case SIGSTOP: case SIGTSTP:
+			case SIGCONT: case SIGALRM:
+#ifdef SIGWINCH
+			case SIGWINCH:
+#endif
+#ifdef SIGCHLD
+			case SIGCHLD:
+#else
+#ifdef SIGCLD
+			case SIGCLD:
+#endif
+#endif
+					break;	/* from switch, cont loop */
+			default:
+				if(signal(i,handle_sig)==-1)
+				{
+					sprintf(buf,"signal(%d)",i);
+					perror(buf);
+				}
+				break;
+		}
+	}
 
 	if(!(f=fopen(fname,"r")))
 	{
