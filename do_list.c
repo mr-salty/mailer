@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.3  1995/12/28 18:06:58  tjd
+ * added timeout at end of loop waiting for children
+ *
  * Revision 1.2  1995/12/27 17:50:06  tjd
  * added WIFSIGNALED check
  *
@@ -43,7 +46,7 @@ static void do_status()
 	static time_t start=0;
 	char timebuf[80];
 	time_t now,diff;
-	int len,h,m,s;
+	int len,h,m,s,wait_timeout;
 
 	if(sf==NULL)
 	{
@@ -268,7 +271,9 @@ void do_list(char *fname)
 		users[inbuf].addr=NULL;
 		do_delivery();
 	}
-	while(numchildren)
+
+	wait_timeout=0;
+	while(numchildren && ++wait_timeout < 720) /* wait an hour */
 	{
 		sleep(5);
 		handle_child();
@@ -276,6 +281,9 @@ void do_list(char *fname)
 #ifdef STATUS
 	do_status();
 #endif
+
+	if(numchildren)
+		fprintf(stderr,"WARNING: %d children did not exit!\n",numchildren);
 }
 
 static void do_delivery()
