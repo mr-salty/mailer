@@ -1,5 +1,8 @@
 /*
  * $Log: bounce.c,v $
+ * Revision 1.4  1996/02/12 00:42:15  tjd
+ * added file locking and logging to BOUNCE_FILE
+ *
  * Revision 1.3  1996/01/02 04:30:43  tjd
  * added SMTP status code to bounce messages
  *
@@ -12,13 +15,44 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/file.h>
+#include "mailer_config.h"
 #include "userlist.h"
 
 void bounce_user(char *addr,bounce_reason why,int statcode)
 {
 	char *reasons[]=BOUNCE_REASONS;
+	char buf[MAX_ADDR_LEN+100];
+	int fd;
 
-	fprintf(stderr,"BOUNCE_USER: %s [%03d %s]\n",addr,statcode,reasons[why]);
+	sprintf(buf,"%s [%03d %s]\n",addr,statcode,reasons[why]);
+
+	if((fd=open(BOUNCE_FILE,O_WRONLY|O_APPEND,0666))==-1)
+	{
+#ifdef ERROR_MESSAGES
+		perror("open (bounce file)");
+#endif
+		return;
+	}
+
+	if(flock(fd,LOCK_EX) == -1)
+	{
+#ifdef ERROR_MESSAGES
+		perror("lock (bounce file)");
+#endif
+	}
+
+	if(write(fd,buf,strlen(buf)) == -1)
+	{
+#ifdef ERROR_MESSAGES
+		perror("write (bounce)");
+#endif
+	}
+
+	flock(fd,LOCK_UN);
+	close(fd);
 }
 
 /* returns # of failures */
