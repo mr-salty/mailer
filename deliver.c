@@ -1,6 +1,9 @@
 /*
  * $Log: deliver.c,v $
- * Revision 1.8  1996/01/02 01:19:33  tjd
+ * Revision 1.9  1996/01/02 03:37:32  tjd
+ * added more checks for valid SMTP response- digit digit digit space
+ *
+ * Revision 1.8  1996/01/02  01:19:33  tjd
  * missed a )
  *
  * Revision 1.7  1996/01/02  01:12:26  tjd
@@ -34,6 +37,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <setjmp.h>
+#include <ctype.h>
 
 #include "sendmail.h"
 #include "mailer_config.h"
@@ -324,7 +328,8 @@ restart:
 	fprintf(stderr,"SMTP: %s\n",buf);
 #endif
 
-	while(ptr[3] != ' ')
+	while(!isdigit(ptr[0]) || !isdigit(ptr[1]) ||
+	      !isdigit(ptr[2]) || ptr[3] != ' ')
 	{
 		if((t=strchr(ptr,'\n')) == NULL)
 			goto restart;
