@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.24  1997/07/08 02:15:43  tjd
+ * scheduler tweak.
+ *
  * Revision 1.23  1996/05/27 18:47:24  tjd
  * close all fd's after fork()
  *
@@ -390,7 +393,7 @@ static void schedule()
 
 	while(numchildren >= child_limit)
 	{
-		sleep(2);
+		sleep(1);
 		numexited=handle_child();
 
 		/* mc_factor is a scheduling parameter that controls how
@@ -407,6 +410,9 @@ static void schedule()
 
 		/* we want an average of 1 child every 2 seconds, so we
 		 * try to make that happen.
+		 * 97/06/16: this is no longer true.  we now have 25k children.
+		 * this probably needs re-written to deal with higher rates.
+		 * right now 25k in 28k seconds is close to 1 per second.
 		 */
 
 		if(numexited==0) {
