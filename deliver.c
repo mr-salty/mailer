@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.20  1997/07/05 18:57:28  tjd
+ * added selective debug facility
+ *
  * Revision 1.19  1997/07/05 18:20:54  tjd
  * fixed misplaced paren when we call inet_addr()
  *
@@ -106,21 +109,64 @@ static userlist *gl_users=NULL;
 static char *hostname2;	/* filled in by deliver() */
 #endif
 
+#ifdef DEBUG_SMTP_SELECTIVE
+#define DEBUG_SMTP_BUFSIZE (MAX_HOSTNAME_LEN + 1)
+static int debug_host(char *host)
+{
+    FILE *fp;
+    char buf[DEBUG_SMTP_BUFSIZE];
+
+    fp=fopen(DEBUG_SMTP_LIST, "r");
+    if(fp == NULL) {
+	return 0;
+    }
+
+    while(fgets(buf, DEBUG_SMTP_BUFSIZE, fp) != NULL) {
+	int l = strlen(buf);
+
+	if(buf[l-1] == '\n') {
+	    buf[l-1] = '\0';
+	}
+
+	if(!strcasecmp(host, buf)) {
+	    fclose(fp);
+	    return 1;
+	}
+    }
+    fclose(fp);
+    return 0;
+}
+#endif
+
 #include <stdarg.h>
 void debug(char *format,...) {
 #ifdef DEBUG_SMTP
-    static FILE *fpLog = 0;
+    static FILE *fpLog = NULL;
+    static int go_away = 0;
     char dlog[MAX_HOSTNAME_LEN+20];
     va_list ap;
     va_start(ap,format);
 
-    if (!fpLog) {
+    if(go_away) {
+	return;
+    }
+
+    if (fpLog == NULL) {
+#ifdef DEBUG_SMTP_SELECTIVE
+	if(!debug_host(hostname2)) {
+	    go_away = 1;
+	    return;
+	}
+#endif
 	sprintf(dlog,"debug/D%s.%05d",hostname2,getpid());
 	fpLog = fopen(dlog,"w");
+	if(fpLog == NULL) {
+	    go_away = 1;
+	    return;
+	}
     }
-   if(fpLog) {
-		vfprintf(fpLog,format,ap);
-    }
+    vfprintf(fpLog,format,ap);
+
     va_end(ap);
 #endif
 }
