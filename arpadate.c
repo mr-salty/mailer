@@ -32,6 +32,9 @@
  * SUCH DAMAGE.
  *
  * $Log: arpadate.c,v $
+ * Revision 1.4  2004/02/08 16:35:30  tjd
+ * include time.h
+ *
  * Revision 1.3  1996/05/02 22:54:31  tjd
  * cleanups.
  *
@@ -43,6 +46,7 @@
  *
  */
 
+#include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
 
