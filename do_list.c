@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.17  1996/05/02 22:39:41  tjd
+ * removed all dependencies on useful.h
+ *
  * Revision 1.16  1996/05/02 22:20:19  tjd
  * moved signal code to setup_signals()
  *
@@ -64,7 +67,6 @@
 #include <errno.h>
 #include <ctype.h>
 
-#include "useful.h"
 #include "mailer_config.h"
 #include "userlist.h"
 

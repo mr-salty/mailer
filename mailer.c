@@ -1,5 +1,8 @@
 /*
  * $Log: mailer.c,v $
+ * Revision 1.2  1996/05/02 22:39:41  tjd
+ * removed all dependencies on useful.h
+ *
  * Revision 1.1  1995/12/14 15:23:30  tjd
  * Initial revision
  *
@@ -8,7 +11,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "mailer_config.h"
-#include "useful.h"
 
 /* mailer listfile message_file from@host [path to mpp] */
 
