@@ -1,6 +1,9 @@
 /*
  * $Log: deliver.c,v $
- * Revision 1.6  1996/01/02 00:34:47  tjd
+ * Revision 1.7  1996/01/02 01:12:26  tjd
+ * allowed 250 Ok response where 354 is expected to accomidate broken sendmails
+ *
+ * Revision 1.6  1996/01/02  00:34:47  tjd
  * minor change to smtp_write for DATA and QUIT
  *
  * Revision 1.5  1996/01/02  00:29:11  tjd
@@ -333,7 +336,7 @@ restart:
 	fprintf(stderr,"SMTP: got code %d\n",last_status);
 #endif
 
-	if(code == last_status || (code==251 && last_status==250)) /* special case */
+	if(code == last_status || (code==251 && last_status==250) || (code==354 && last_status == 250) /* special cases */
 		return 1;
 	else
 	{
