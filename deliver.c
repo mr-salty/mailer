@@ -1,7 +1,7 @@
 /*
  * $Log: deliver.c,v $
- * Revision 1.25  2000/03/08 13:59:12  tjd
- * temp checkin of yahoo blocking
+ * Revision 1.26  2000/03/08 14:04:35  tjd
+ * roll back 1.25 change
  *
  * Revision 1.24  1999/09/07 20:16:58  tjd
  * fix handling of continued lines in responses
@@ -217,10 +217,6 @@ int deliver(char *hostname,userlist users[], flags_t in_flags)
 	{
 		nmx=1;
 		mxhosts[0]=hostname;
-	}
-
-    	if(strstr(mxhosts[0], "yahoo.com")) {
-		return bounce(users,(host_failure<<16));
 	}
 
 	for(i=0;i<nmx;++i)
