@@ -1,5 +1,10 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.21  1997/10/11 07:08:11  tjd
+ * added support for mailer config file for debugging, batching, and setting
+ * some parameters.
+ * also fixed the computation of the batch_id
+ *
  * Revision 1.20  1997/07/05 18:57:28  tjd
  * added selective debug facility
  *
@@ -107,35 +112,7 @@ static userlist *gl_users=NULL;
 
 #ifdef DEBUG_SMTP
 static char *hostname2;	/* filled in by deliver() */
-#endif
-
-#ifdef DEBUG_SMTP_SELECTIVE
-#define DEBUG_SMTP_BUFSIZE (MAX_HOSTNAME_LEN + 1)
-static int debug_host(char *host)
-{
-    FILE *fp;
-    char buf[DEBUG_SMTP_BUFSIZE];
-
-    fp=fopen(DEBUG_SMTP_LIST, "r");
-    if(fp == NULL) {
-	return 0;
-    }
-
-    while(fgets(buf, DEBUG_SMTP_BUFSIZE, fp) != NULL) {
-	int l = strlen(buf);
-
-	if(buf[l-1] == '\n') {
-	    buf[l-1] = '\0';
-	}
-
-	if(!strcasecmp(host, buf)) {
-	    fclose(fp);
-	    return 1;
-	}
-    }
-    fclose(fp);
-    return 0;
-}
+static int debug_flag;
 #endif
 
 #include <stdarg.h>
@@ -152,12 +129,11 @@ void debug(char *format,...) {
     }
 
     if (fpLog == NULL) {
-#ifdef DEBUG_SMTP_SELECTIVE
-	if(!debug_host(hostname2)) {
+	if(!debug_flag) {
 	    go_away = 1;
 	    return;
 	}
-#endif
+
 	sprintf(dlog,"debug/D%s.%05d",hostname2,getpid());
 	fpLog = fopen(dlog,"w");
 	if(fpLog == NULL) {
@@ -188,7 +164,7 @@ void handle_sig(int sig)
 
 /* finds all the mx records and tries to deliver the message */
 
-int deliver(char *hostname,userlist users[])
+int deliver(char *hostname,userlist users[],int do_debug)
 {
 	struct hostent *host;
 	int nmx,rcode,i,p,deliver_status=0,taddr;
@@ -199,6 +175,7 @@ int deliver(char *hostname,userlist users[])
 	gl_users=users;
 #ifdef DEBUG_SMTP
 	hostname2=hostname;
+	debug_flag = do_debug;
 #endif
 	debug("Hostname: %s\n",hostname);
 

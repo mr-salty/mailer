@@ -1,5 +1,10 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.15  1997/10/11 07:08:11  tjd
+ * added support for mailer config file for debugging, batching, and setting
+ * some parameters.
+ * also fixed the computation of the batch_id
+ *
  * Revision 1.14  1997/08/14 15:10:13  tjd
  * added TWEAK_MSGID
  *
@@ -53,9 +58,7 @@
 #define STATUS	100	/* status every n messages */
 
 #define DEBUG_SMTP	/* SMTP deliver() debugging */
-
-#define DEBUG_SMTP_SELECTIVE	/* use list of hosts to debug */
-#define DEBUG_SMTP_LIST "mailer.debug_hosts"	/* file of hosts to debug */
+#undef DEBUG_SMTP_ALL	/* debug ALL SMTP sessions (highly unrecommended!) */
 
 #undef NO_FORK		/* useful to debug deliver() */
 #undef NO_DELIVERY	/* fake delivery if defined */
@@ -67,6 +70,9 @@
 
 /* bounces file name */
 #define BOUNCE_FILE	"mailer.bounces"
+
+/* configuration file name */
+#define CONFIG_FILE	"mailer.config"
 
 /* do we want bounce mail from remote SMTPs to be discarded at the source?
  * defining this will send MAIL FROM:<>.  Probably not a good idea.
@@ -88,7 +94,7 @@
 #define BUFFER_LEN   	4096	/* single delivery attempt buffer */
 #define MAXMXHOSTS	20	/* max # of MX records */
 
-/* scheduler parameters */
+/* scheduler parameters.  these can be overridden in the config file. */
 #define MAX_CHILD	90	/* max # of deliver children */
 #define MIN_CHILD	15	/* min # of deliver children */
 #define TARGET_RATE	10000	/* target rate in deliveries per hour */

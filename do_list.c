@@ -1,5 +1,10 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.26  1997/10/11 07:08:11  tjd
+ * added support for mailer config file for debugging, batching, and setting
+ * some parameters.
+ * also fixed the computation of the batch_id
+ *
  * Revision 1.25  1997/08/14 16:01:43  tjd
  * added TWEAK_MSGID stuff
  *
@@ -85,6 +90,7 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -105,13 +111,17 @@ static userlist users[ADDRS_PER_BUF+1];	  /* +1 for null marker at end */
 
 static int numchildren=0,delivery_rate=TARGET_RATE;
 static int numforks=0,numprocessed=0,numfailed=0;
+static int list_line = 0, batch_id = 0;
+static int max_child,min_child,target_rate;
 
-int deliver(char *hostname,userlist users[]);
+int deliver(char *hostname,userlist users[],int do_debug);
 void bounce_user(char *addr,bounce_reason why,int statcode);
 void handle_sig(int sig),signal_backend();
 static int parse_address(FILE *f, char **abuf, char **start, char **host);
-static void do_delivery(),do_status(),setup_signals(),schedule();
+static void do_delivery(int debug_flag),do_status(),setup_signals(),schedule();
 static int handle_child();
+static int read_config_file(char *filename);
+static int get_config_entry(char *host, int *debug_flag);
 
 #if defined(TWEAK_MSGID)
 extern char *messagebody;
@@ -122,14 +132,18 @@ void do_list(char *fname)
 {
 	FILE *f;
 
-	int inbuf,hostlen,wait_timeout,fd,next_status=STATUS;
+	int inbuf,hostlen,curhostlen,wait_timeout,fd,next_status=STATUS;
 	char *next,*addr,*host;
+	int addrs_per_buf = ADDRS_PER_BUF;
+	int debug_flag = 0;
 
 	if(!(f=fopen(fname,"r")))
 	{
 		perror("Can't open list file");
 		exit(1);
 	}
+
+        read_config_file(CONFIG_FILE);
 
 	if((fd=open(BOUNCE_FILE,O_CREAT|O_TRUNC|O_WRONLY,0666)) == -1)
 	{
@@ -154,6 +168,7 @@ void do_list(char *fname)
 	 */
 	next=buf;
 	inbuf=0;
+	curhostlen=0;	/* forces us into new host on the first iteration */
 
 	while((hostlen=parse_address(f,&next,&addr,&host)))
 	{
@@ -163,40 +178,45 @@ void do_list(char *fname)
 			next_status+=STATUS;
 		}
 
-		if(!inbuf)	/* empty buffer */
+		if((hostlen != curhostlen) || \
+		    strncasecmp(curhost,host,hostlen))
 		{
-			strncpy(curhost,host,hostlen);
-			curhost[hostlen]='\0';
+		    /* we have a new host */
+
+		    if(inbuf) {
+		        /* deliver what we have */
+			users[inbuf].addr=NULL;
+			do_delivery(debug_flag);
+
+			/* copy current entry to the start of the buffer
+			 * and update the pointers.
+			 */
+			memmove(buf,addr,(next-addr));
+			next=buf+(next-addr);
+			host=buf+(host-addr);
+			addr = buf;
+			inbuf=0;
+		    }
+
+		    /* set the current host and batchsize */
+		    strncpy(curhost,host,hostlen);
+		    curhostlen = hostlen;
+		    curhost[curhostlen]='\0';
+		    addrs_per_buf=get_config_entry(curhost, &debug_flag);
 		}
-		else
-		{
-			if(strncasecmp(curhost,host,hostlen))
-			{	
-				/* new host.  deliver what we have,
-				 * then copy current entry to start of buffer.
-				 */
 
-				users[inbuf].addr=NULL;
-				do_delivery();
-
-				strncpy(curhost,host,hostlen);
-				curhost[hostlen]='\0';
-				memmove(buf,addr,(next-addr));
-				next=buf+(next-addr);
-				users[0].addr=buf;
-				inbuf=1;
-				continue;
-			}
+		if(inbuf == 0) {
+		    batch_id = list_line;
 		}
 
 		users[inbuf++].addr=addr;
 
-		if(inbuf == ADDRS_PER_BUF ||
+		if(inbuf == addrs_per_buf ||
 		   (next-buf) >= (BUFFER_LEN-MAX_ADDR_LEN) ||
 		   feof(f))
 		{
 			users[inbuf].addr=NULL;
-			do_delivery();
+			do_delivery(debug_flag);
 			inbuf=0;
 			next=buf;
 		}
@@ -209,7 +229,7 @@ void do_list(char *fname)
 	if(inbuf)
 	{
 		users[inbuf].addr=NULL;
-		do_delivery();
+		do_delivery(debug_flag);
 	}
 
 	do_status();
@@ -248,6 +268,7 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host)
 		if(!fgets(a_buf,MAX_ADDR_LEN+2,f))	/* no more addresses */
 			return 0;
 
+		++list_line;
 		++numprocessed;
 		a_start=a_buf;
 
@@ -347,18 +368,16 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host)
 /* forks and calls deliver() to deliver the messages.
  */
 
-static void do_delivery()
+static void do_delivery(int debug_flag)
 {
 	int i;
 
 #if defined(TWEAK_MSGID)
-	static int batch_id = 1;
 	char buf[7];
 
 	if(batch_id > 999999) batch_id=999999;	/* should never happen */
 	sprintf(buf,"%06d", batch_id);
 	memcpy(idptr, buf, 6);
-	batch_id = numprocessed;
 #endif
 
 #ifndef NO_FORK
@@ -374,7 +393,7 @@ retryfork:
 			goto retryfork;
 		case 0:
 			for(i=0;i<OPEN_MAX;++i) close(i);
-			exit(deliver(curhost,users));
+			exit(deliver(curhost,users,debug_flag));
 
 		default:
 			numforks++;
@@ -411,9 +430,13 @@ static int handle_child()
 
 static void schedule()
 {
-	static int child_limit=MIN_CHILD;
+	static int child_limit=0;
 	static int mc_factor=1;	
 	int numexited;
+
+	if(child_limit == 0) {
+	    child_limit = min_child;
+	}
 
 	while(numchildren >= child_limit)
 	{
@@ -425,9 +448,9 @@ static void schedule()
 		 * keep within 5% of our target.
 		 */
 
-		if(delivery_rate < (int)(0.95 * TARGET_RATE))
+		if(delivery_rate < (int)(0.95 * target_rate))
 			mc_factor=2;
-		else if(delivery_rate > (int)(1.05 * TARGET_RATE))
+		else if(delivery_rate > (int)(1.05 * target_rate))
 			mc_factor=0;
 		else
 			mc_factor=1;
@@ -441,14 +464,14 @@ static void schedule()
 
 		if(numexited==0) {
 			child_limit++;
-			if(child_limit > MAX_CHILD) child_limit=MAX_CHILD;
+			if(child_limit > max_child) child_limit=max_child;
 		}
 		else if(numexited <= mc_factor) {
 			/* do nothing */
 			}
 		else {
 			child_limit--;
-			if(child_limit < MIN_CHILD) child_limit=MIN_CHILD;
+			if(child_limit < min_child) child_limit=min_child;
 		}
 	}
 }
@@ -536,4 +559,203 @@ static void setup_signals()
 				break;
 		}
 	}
+}
+
+/*
+ * config file stuff
+ */
+
+
+typedef struct _config_entry {
+    char *host;
+    int debug:1;
+    int batch:31;
+    struct _config_entry *next;
+} config_entry;
+
+static config_entry *head = NULL;
+
+
+/*
+ * read_config_file(filename)
+ *
+ * reads the specified config file for config, debug, and batchsize info
+ *
+ * also sets the globals max_child, min_child, target_rate
+ */
+
+#define CONFIG_BUFLEN	(MAX_ADDR_LEN + 80)
+static int read_config_file(char *filename)
+{
+    FILE *fp;
+    char buf[CONFIG_BUFLEN];
+    config_entry *new_entry;
+    char *ptr,*hostp,*batchp;
+    int debug, batch;
+    
+    /* set defaults for scheduler parameters */
+    max_child = MAX_CHILD;
+    min_child = MIN_CHILD;
+    target_rate = TARGET_RATE;
+
+    fp = fopen(filename,"r");
+    if(fp == (FILE *) NULL) {
+	return -1;
+    }
+
+    buf[CONFIG_BUFLEN - 2] ='\n';
+
+    while(fgets(buf, CONFIG_BUFLEN, fp) != NULL) {
+
+	if(buf[CONFIG_BUFLEN - 2] != '\n') {
+	    int c;
+	    /* line is too long, argh */
+	    fprintf(stderr,
+		"Warning: long line '%s'... in config file ignored!\n", buf);
+	    
+	    do {
+		c=getc(fp);
+	    } while((c != '\n') && c != EOF);
+
+	    buf[CONFIG_BUFLEN-2]='\n';
+	    continue;
+	}
+
+	/* skip leading whitespace */
+	ptr=buf;
+	while(isspace(*ptr) && *ptr) { ++ptr; }
+	
+	if(*ptr == '#' || !*ptr) {
+	    continue;	/* comment or blank line */
+	}
+
+	/* found hostname */
+	hostp=ptr;
+	
+	while(!isspace(*ptr) && *ptr) { ++ptr; }
+	if(!*ptr) {
+	    /* just a hostname with nothing else, ignore it */
+	    continue;
+	}
+	*ptr='\0';
+	++ptr;
+
+
+	/* find batch size or debug flag.
+	 * setting batch to -1 means use the default (see get_config_entry)
+	 */
+	 
+	while(isspace(*ptr) && *ptr) { ++ptr; }
+
+	if(tolower(*ptr) == 'y') {
+	    batch = -1;
+	    debug = 1;
+	} else if(tolower(*ptr) == 'n') {
+	    batch = -1;
+	    debug = 0;
+	} else {
+	    batchp=ptr;
+	    while(!isspace(*ptr) && *ptr) { ++ptr; }
+	    if(*ptr) {
+	        *ptr='\0';
+	        ++ptr;
+	    }
+
+	    batch=atoi(batchp);
+	    if(batch <= 0) { batch = -1; }
+
+	    /* try to find debug flag */
+	    while(isspace(*ptr) && *ptr) { ++ptr; }
+	    if(tolower(*ptr) == 'y') {
+	        debug = 1;
+	    } else {
+		debug = 0;
+	    }
+	}
+	
+	/* special cases (parameters) */
+	if(!strcasecmp(hostp,"min_child")) {
+	    min_child = batch;
+	} else if(!strcasecmp(hostp,"max_child")) {
+	    max_child = batch;
+	} else if(!strcasecmp(hostp,"target_rate")) {
+	    target_rate = batch;
+	} else {
+	    /* make a new record for this host */
+
+	    if(!(new_entry = malloc(sizeof(config_entry)))) {
+		perror("malloc (new_entry)");
+		continue;
+	    }
+	    if(!(new_entry->host = malloc(strlen(hostp)+1))) {
+		perror("malloc (new_entry->host)");
+		free(new_entry);
+		continue;
+	    }
+	    strcpy(new_entry->host, hostp);
+	    new_entry->debug = debug;
+	    new_entry->batch = batch;
+
+	    new_entry->next = head;
+	    head = new_entry;
+	}
+
+	continue;
+    }
+    fclose(fp);
+    return 0;
+}
+
+
+/*
+ * config_lookup_host()
+ * looks up the host in the config file info
+ */
+
+static int get_config_entry(char *host, int *debug_flag)
+{
+    config_entry *e;
+    int batch;
+
+    for(e=head; e != NULL; e=e->next) {
+	char *p1=e->host, *p2=host;
+
+	if(e->host[0] == '*') {
+	    /* wildcard.  offset makes it so we try to match the tail of
+	     * e->host, skipping the star.
+	     */
+	    int offset = strlen(host) - (strlen(e->host) - 1);
+	    if(offset < 0) {
+		/* too short to possibly match */
+		continue;
+	    }
+	    ++p1;		/* skip the star */
+	    p2 += offset;
+	}
+	
+	if(!strcasecmp(p1,p2)) {
+	    break;
+	}
+    }
+    if(e==NULL) {
+	/* didn't find an entry */
+	batch = -1;
+	*debug_flag = 0;
+    } else {
+	batch = e->batch;
+	*debug_flag = (e->debug != 0);
+    }
+
+    if(batch <= 0) {
+	batch = ADDRS_PER_BUF;	/* default batchsize */
+    }
+
+    #if defined(DEBUG_SMTP_ALL)
+    *debug_flag = 1;
+    #endif
+    #if !defined(DEBUG_SMTP)
+    *debug_flag = 0;
+    #endif
+    
+    return batch;
 }
