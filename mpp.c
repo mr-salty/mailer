@@ -1,5 +1,8 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.3  1996/08/05 17:55:26  tjd
+ * added Received: header on outgoing message
+ *
  * Revision 1.2  1996/02/15 04:10:01  tjd
  * write output to temp file rather than stdout (pipe)
  * this in preparation for mmap()ing the message
@@ -33,7 +36,7 @@ int main(int argc, char *argv[])
 
 	if(argc != 4)
 	{
-		fprintf(stderr,"Usage: mpp msgfile from_hostname\n");
+		fprintf(stderr,"Usage: mpp msgfile tmpfile from_hostname\n");
 		exit(1);
 	}
 
@@ -98,6 +101,9 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			sprintf(p,"Date: %s\r\n",arpadate(NULL));
+			p+=strlen(p);
+			sprintf(p,"Received: from mailer by %s with SMTP;\r\n"
+				  "          %s\r\n",argv[3],arpadate(NULL));
 			p+=strlen(p);
 			sprintf(p,"Message-Id: <%s.%d.%d@%s>\r\n",
 				HEADER_HEADER,(int)time(NULL),rand(),argv[3]);
