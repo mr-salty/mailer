@@ -1,5 +1,9 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.18  1996/05/04 18:41:27  tjd
+ * STATUS is no longer optional, it must be defined.
+ * also minor cleanups.
+ *
  * Revision 1.17  1996/05/02 22:39:41  tjd
  * removed all dependencies on useful.h
  *
@@ -83,7 +87,6 @@ static int numchildren=0,child_limit=MIN_CHILD,delivery_rate=TARGET_RATE;
 static void do_delivery();
 static void handle_child();
 
-#ifdef STATUS
 static int numforks=0,numprocessed=0,numfailed=0;
 
 static void do_status()
@@ -130,13 +133,10 @@ static void do_status()
 	}
 	fflush(sf);
 }
-#endif
 
 void signal_backend()
 {
-#ifdef STATUS
 	do_status();
-#endif
 	exit(1);
 }
 
@@ -193,23 +193,20 @@ void do_list(char *fname)
 	}
 	close(i);
 
+	do_status();
+	setup_signals();
+
+	/* main loop */
 	next=buf;
 	inbuf=0;
 
-#ifdef STATUS
-	do_status();
-#endif
-	setup_signals();
-
 	while(fgets(next,MAX_ADDR_LEN+2,f))	/* newline + null */
 	{
-		++numprocessed;
-#ifdef STATUS
-		if(!(numprocessed % STATUS))
+		if(!(++numprocessed % STATUS))
 		{
 			do_status();
 		}
-#endif
+
 		/* this is tricky.  everything is really in buf.
 		 * next points to where we just read the address.
 		 */
@@ -341,26 +338,27 @@ void do_list(char *fname)
 		}
 	}
 
-	/* out of the loop, we're done!!!  feof() above won't catch this. */
+	/* out of the loop, we're done!!!
+         * if we exited from the top of the loop, we could still have
+	 * some addresses to deliver to.
+	 */
+
 	if(inbuf)
 	{
 		users[inbuf].addr=NULL;
 		do_delivery();
 	}
 
-#ifdef STATUS
 	do_status();
-#endif
 
+	/* loop and wait for the children to exit.  */
 	wait_timeout=0;
 	while(numchildren && ++wait_timeout < 720) /* wait an hour */
 	{
 		sleep(5);
 		handle_child();
 	}
-#ifdef STATUS
 	do_status();
-#endif
 
 	if(numchildren)
 		fprintf(stderr,"WARNING: %d children did not exit!\n",numchildren);
@@ -418,17 +416,12 @@ retryfork:
 			exit(deliver(curhost,users));
 
 		default:
-#ifdef STATUS
 			numforks++;
-#endif
 			numchildren++;
 	}
-#else
-#ifdef STATUS
-	numfailed+=
-#endif
-		deliver(curhost,users);
-#endif
+#else /* NO_FORK */
+	numfailed+=deliver(curhost,users);
+#endif /* NO_FORK */
 }
 
 static void handle_child()
@@ -438,10 +431,8 @@ static void handle_child()
 	while((w=waitpid(-1,&status,WNOHANG)) > 0)
 	{	
 		numchildren--; 
-#ifdef STATUS
 		if(WIFEXITED(status))
 			numfailed+=WEXITSTATUS(status);
-#endif
 #ifdef ERROR_MESSAGES
 		if(WIFSIGNALED(status))
 			fprintf(stderr,"Warning: child exited on signal %d\n",WTERMSIG(status));
