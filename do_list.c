@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.2  1995/12/27 17:50:06  tjd
+ * added WIFSIGNALED check
+ *
  * Revision 1.1  1995/12/14 15:39:06  tjd
  * Initial revision
  *
@@ -329,7 +332,8 @@ static void handle_child()
 		if(WIFEXITED(status))
 			numfailed+=WEXITSTATUS(status);
 #endif
-
+		if(WIFSIGNALED(status))
+			fprintf(stderr,"Warning: child exited on signal %d\n",WTERMSIG(status));
 	}
 #ifdef ERROR_MESSAGES
 	if(w==-1 && errno != ECHILD) perror("waitpid");
