@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.20  1996/05/04 21:24:23  tjd
+ * small fixup for addresses ending in :
+ *
  * Revision 1.19  1996/05/04 20:50:17  tjd
  * major code restructuring:
  * moved parsing code to parse_address
@@ -302,7 +305,7 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host)
 			numfailed++;
 			continue;
 		}
-		if(!hostlen)
+		if(!hostlen || *(a_end-1) == ':')
 		{
 			bounce_user(a_start,bad_addr,2);
 			numfailed++;
