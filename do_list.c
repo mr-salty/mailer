@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.16  1996/05/02 22:20:19  tjd
+ * moved signal code to setup_signals()
+ *
  * Revision 1.15  1996/05/02 22:12:59  tjd
  * removed some old signal code.
  *
@@ -135,14 +138,11 @@ void signal_backend()
 	exit(1);
 }
 
-void do_list(char *fname)
+void setup_signals()
 {
-	FILE *f;
+	int i;
 
-	int inbuf,tmplen,wait_timeout,i;
-	char *current,*start,*next,*user,*tmphost,*p;
-
-	/* catch all signals not named */
+	/* catch all signals not explicitly named */
 
 	for(i=1;i<NSIG;++i)
 	{
@@ -169,6 +169,14 @@ void do_list(char *fname)
 				break;
 		}
 	}
+}
+
+void do_list(char *fname)
+{
+	FILE *f;
+
+	int inbuf,tmplen,wait_timeout,i;
+	char *current,*start,*next,*user,*tmphost,*p;
 
 	if(!(f=fopen(fname,"r")))
 	{
@@ -189,6 +197,7 @@ void do_list(char *fname)
 #ifdef STATUS
 	do_status();
 #endif
+	setup_signals();
 
 	while(fgets(next,MAX_ADDR_LEN+2,f))	/* newline + null */
 	{
