@@ -1,5 +1,8 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.14  1998/04/21 13:35:08  tjd
+ * bump version to 1.5
+ *
  * Revision 1.13  1998/04/21 04:30:20  tjd
  * put time(NULL) at the end.
  * I've seen some mailers only return part of the message-id, so the
@@ -154,7 +157,7 @@ int main(int argc, char *argv[])
 
 	/* received header */
 	sprintf(p,"Received: from local (localhost)\r\n"
-		  "\tby %s (mailer 1.4) with SMTP", host);
+		  "\tby %s (mailer 1.5) with SMTP", host);
 	p+=strlen(p);
 #if defined(USE_IDTAGS) && defined(TWEAK_RCVHDR)
 	sprintf(p," id <%s>", idtag);
