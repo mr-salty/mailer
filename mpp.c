@@ -1,5 +1,11 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.13  1998/04/21 04:30:20  tjd
+ * put time(NULL) at the end.
+ * I've seen some mailers only return part of the message-id, so the
+ * closer the vital info is to the front, the better off we are.  Mayve
+ * HEADER_HEADER should be moved to the end as well.
+ *
  * Revision 1.12  1998/04/21 04:24:21  tjd
  * add time(NULL) back in to message-id, otherwise 2 mailings in the same
  * day will have duplicate ID's.  Now we just can't mail 2 in the same
@@ -141,9 +147,9 @@ int main(int argc, char *argv[])
 	 * be careful about changing these (see do_list.c)
 	 */
 
-	sprintf(idtag,"%s.%d.%04d%02d%02d.%c%s", HEADER_HEADER, (int) utime,
+	sprintf(idtag,"%s.%04d%02d%02d.%c%s.%d", HEADER_HEADER,
 		ltime->tm_year+1900, ltime->tm_mon+1, ltime->tm_mday,
-		'\xff',"00000.000");
+		'\xff',"00000.000", (int) utime);
 #endif /* USE_IDTAGS */
 
 	/* received header */
