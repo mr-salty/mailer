@@ -1,5 +1,9 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.6  1996/04/15 16:36:42  tjd
+ * added CONNECT_TIMEOUT for tcp connect() timeout
+ * since linux's timeout is excruciatingly long...
+ *
  * Revision 1.5  1996/04/14 22:00:54  tjd
  * changed default MAX_CHILD to 30.
  *
@@ -48,6 +52,7 @@
 #define MAX_CHILD	30	/* max # of deliver children */
 
 /* SMTP: timeouts as defined in RFC1123 */
+#define CONNECT_TIMEOUT		300	/* timeout for tcp connect() */
 #define SMTP_TIMEOUT_WELCOME	300
 #define SMTP_TIMEOUT_HELO	300	/* not defined in 1123 */
 #define SMTP_TIMEOUT_MAIL	300

@@ -1,5 +1,9 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.15  1996/04/15 16:36:42  tjd
+ * added CONNECT_TIMEOUT for tcp connect() timeout
+ * since linux's timeout is excruciatingly long...
+ *
  * Revision 1.14  1996/03/21 19:27:43  tjd
  * added NULL_RETURN_PATH define
  *
@@ -174,6 +178,8 @@ void hperror(char *msg)
 }
 #endif
 
+jmp_buf jmpbuf; /* for alarm */
+static void handle_alarm(int dummy);
 
 /* called by above once we have a host address to try 
  *
@@ -204,14 +210,34 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 		return -1;
 	}
 
+	if(signal(SIGALRM,handle_alarm)==SIG_ERR)
+	{
+#ifdef ERROR_MESSAGES
+		hperror("signal (connect alarm)");
+#endif
+		return -1;
+	}
+
+	if(setjmp(jmpbuf))
+	{
+#ifdef DEBUG
+		fprintf(stderr,"Timed out during connect()\n");
+#endif
+		alarm(0);
+		return -1;
+	}
+	alarm(CONNECT_TIMEOUT);
+
 	if(connect(s,(struct sockaddr *)&sock,sizeof(struct sockaddr_in)) == -1)
 	{
+		alarm(0);
 #ifdef ERROR_MESSAGES
 		hperror("connect");
 #endif
 		close(s);
 		return -1;
 	}
+	alarm(0);
 #endif /* NO_DELIVERY */
 
 	if(smtp_write(s,1,NULL,NULL,220,SMTP_TIMEOUT_WELCOME)) 
@@ -305,9 +331,6 @@ static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,int timeou
 	}
 	return 0;
 }
-
-jmp_buf jmpbuf; /* for alarm */
-static void handle_alarm(int dummy);
 
 static int lookfor(int s,int code,int alarmtime)
 {
