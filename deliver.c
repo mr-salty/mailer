@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.4  1995/12/31 20:14:42  tjd
+ * added 550/551/generic user unknown indication
+ *
  * Revision 1.3  1995/12/27 18:56:45  tjd
  * fixed problem where messagebody was copied into a buffer
  * that was probably too small to contain it.
@@ -31,6 +34,7 @@ int bounce(userlist users[],bounce_reason fail_all);
 #define TMPBUFLEN	(MAX_ADDR_LEN+80)
 
 static char buf[TMPBUFLEN];
+static int last_status;		/* status of last lookfor() */
 extern char *messagebody,*myhostname,*mailfrom;
 extern int messagebody_size;
 
@@ -88,8 +92,8 @@ int deliver(char *hostname,userlist users[])
 	switch(deliver_status)
 	{
 		case -1:	return bounce(users,host_failure);
-		case -2:	return bounce(users,unk_addr);
 		case 0:		return 0;
+		case -2:	
 		default:	return bounce(users,0);	
 	}
 }
@@ -165,8 +169,18 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 			case -1:	return -1;
 
 			case 1:
-					users[p].bounced=unk_addr;
-					rcpt_fail++;
+				switch(last_status)
+				{
+					case 550:
+						users[p].bounced=unk_addr_550;
+						break;
+					case 551:
+						users[p].bounced=unk_addr_551;
+						break;
+					default:
+						users[p].bounced=unk_addr;
+				}
+				rcpt_fail++;
 		}
 	}
 	if(p==rcpt_fail) return -2;	/* no valid recipients */
@@ -190,6 +204,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 /* returns:	 0 for ok
  *		-1 if the write failed		(always close s)
  *		 1 if the lookfor failed	(close s if close_s is true)
+ *			[last_status will be set]
  *
  * if fmt is NULL we don't do the write, just lookfor.
  * if arg is NULL we don't sprintf, but use fmt as the pointer.
@@ -235,7 +250,7 @@ static void handle_alarm(int dummy);
 
 static int lookfor(int s,int code,int alarmtime)
 {
-	int len,retcode;
+	int len;
 	char *ptr,*t;
 
 	buf[0]='\0';
@@ -285,18 +300,18 @@ restart:
 		}
 	}		
 
-	retcode=atoi(buf);
+	last_status=atoi(buf);
 
 #ifdef DEBUG_SMTP
-	fprintf(stderr,"SMTP: got code %d\n",retcode);
+	fprintf(stderr,"SMTP: got code %d\n",last_status);
 #endif
 
-	if(code == retcode || (code==251 && retcode==250)) /* special case */
+	if(code == last_status || (code==251 && last_status==250)) /* special case */
 		return 1;
 	else
 	{
 #ifdef DEBUG
-		fprintf(stderr,"Error, expected %d got %d\n",code,retcode);
+		fprintf(stderr,"Error, expected %d got %d\n",code,last_status);
 #endif
 		return 0;
 	}
