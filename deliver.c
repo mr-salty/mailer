@@ -1,6 +1,9 @@
 /*
  * $Log: deliver.c,v $
- * Revision 1.10  1996/01/02 03:57:42  tjd
+ * Revision 1.11  1996/01/02 04:30:43  tjd
+ * added SMTP status code to bounce messages
+ *
+ * Revision 1.10  1996/01/02  03:57:42  tjd
  * call inet_addr if gethostbyname() fails
  *
  * Revision 1.9  1996/01/02  03:37:32  tjd
@@ -77,7 +80,7 @@ void handle_sig(int sig)
 	if(in_child)
 	{
 		fprintf(stderr,"Warning: pid %d caught signal %d, failing.\n",getpid(),sig);
-		exit(bounce(gl_users,caught_signal));
+		exit(bounce(gl_users,(caught_signal<<16) | sig));
 	}
 	else
 	{
@@ -141,7 +144,7 @@ int deliver(char *hostname,userlist users[])
 
 	switch(deliver_status)
 	{
-		case -1:	return bounce(users,host_failure);
+		case -1:	return bounce(users,(host_failure<<16));
 		case 0:		return 0;
 		case -2:	
 		default:	return bounce(users,0);	
@@ -211,7 +214,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 
 	for(p=0;users[p].addr;++p)
 	{
-		users[p].bounced=0;
+		users[p].statcode=0;
 
 		switch(smtp_write(s,0,"RCPT TO:<%s>\r\n",users[p].addr,251,SMTP_TIMEOUT_RCPT))
 		{
@@ -219,18 +222,10 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 			case -1:	return -1;
 
 			case 1:
-				switch(last_status)
-				{
-					case 550:
-						users[p].bounced=unk_addr_550;
-						break;
-					case 551:
-						users[p].bounced=unk_addr_551;
-						break;
-					default:
-						users[p].bounced=unk_addr;
-				}
-				rcpt_fail++;
+					users[p].statcode=(unk_addr<<16);
+					users[p].statcode |= last_status;
+					rcpt_fail++;
+					break;
 		}
 	}
 	if(p==rcpt_fail) return -2;	/* no valid recipients */

@@ -1,6 +1,9 @@
 /* 
  * $Log: do_list.c,v $
- * Revision 1.6  1996/01/02 00:29:11  tjd
+ * Revision 1.7  1996/01/02 04:30:43  tjd
+ * added SMTP status code to bounce messages
+ *
+ * Revision 1.6  1996/01/02  00:29:11  tjd
  * added signal handling code
  *
  * Revision 1.5  1996/01/01  22:04:19  tjd
@@ -35,7 +38,7 @@
 #include "userlist.h"
 
 int deliver(char *hostname,userlist users[]);
-void bounce_user(char *addr,bounce_reason why);
+void bounce_user(char *addr,bounce_reason why,int statcode);
 void handle_sig(int sig);
 
 static char curhost[MAX_HOSTNAME_LEN+1];  /* +1 for null */
@@ -194,7 +197,7 @@ void do_list(char *fname)
 
 		if(*p != '\n') {
 			char c;
-			bounce_user(start,long_addr);
+			bounce_user(start,long_addr,0);
 			numfailed++;
 			while((c=fgetc(f)) != '\n') { 
 				if(feof(f))
@@ -223,7 +226,7 @@ void do_list(char *fname)
 
 			if(!(p=strchr(start,':')))
 			{
-				bounce_user(start,bad_addr);
+				bounce_user(start,bad_addr,0);
 				numfailed++;
 				next=current;
 				continue;
@@ -244,7 +247,7 @@ void do_list(char *fname)
 
 			if(!(tmphost=strrchr(start,'@')))
 			{
-				bounce_user(start,bad_addr);
+				bounce_user(start,bad_addr,1);
 				numfailed++;
 				next=current;
 				continue;
@@ -260,7 +263,7 @@ void do_list(char *fname)
 
 		if(tmplen>MAX_HOSTNAME_LEN)
 		{
-			bounce_user(start,long_host);
+			bounce_user(start,long_host,tmplen);
 			numfailed++;
 			next=current;
 			continue;
