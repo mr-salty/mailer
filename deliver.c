@@ -1,5 +1,9 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.27  2004/02/08 16:43:55  tjd
+ * use sigset/longjmp instead of the non-sig versions
+ * special case some failure codes, although i don't remember why...
+ *
  * Revision 1.26  2000/03/08 14:04:35  tjd
  * roll back 1.25 change
  *
@@ -293,7 +297,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 		return -1;
 	}
 
-	if(setjmp(jmpbuf))
+	if(sigsetjmp(jmpbuf, 1))
 	{
 		debug("SMTP: Timed out during connect()\n");
 		alarm(0);
@@ -316,10 +320,46 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	if(smtp_write(s,1,NULL,NULL,220,SMTP_TIMEOUT_WELCOME)) 
 		return -1;
 
-	if(smtp_write(s,1,"HELO %s\r\n",myhostname,250,SMTP_TIMEOUT_HELO))
+	switch(smtp_write(s,1,"HELO %s\r\n",myhostname,250,SMTP_TIMEOUT_HELO))
+	{
+	  case -1:
 		return -1;
-	if(smtp_write(s,1,"MAIL FROM:<%s>\r\n",mailfrom,250,SMTP_TIMEOUT_MAIL))
+
+	  case 1:
+		for(p=0;users[p].addr;++p)
+		{
+		    debug("SMTP: failing %s, status %d\n",users[p].addr,last_status);
+		    users[p].statcode= (host_failure<<16);
+		    users[p].statcode |= last_status;
+		    rcpt_fail++;
+		}
+		return -2;	/* no valid recipients */
+		
+	}
+
+	switch(smtp_write(s,1,"MAIL FROM:<%s>\r\n",mailfrom,250,SMTP_TIMEOUT_MAIL))
+	{
+	  case -1:
 		return -1;
+
+	  case 1:
+		if (last_status == 421)
+		{
+			for(p=0;users[p].addr;++p)
+			{
+				debug("SMTP: failing %s, status %d\n",users[p].addr,last_status);
+				users[p].statcode= (host_failure<<16);
+				users[p].statcode |= last_status;
+				rcpt_fail++;
+			}
+			return -2;	/* no valid recipients */
+		}
+		else
+		{
+			return -1;
+		}
+		
+	}
 
 	rcpt_fail=0;
 
@@ -352,8 +392,29 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	}
 #endif
 
-	if(smtp_write(s,1,messagebody,NULL,250,SMTP_TIMEOUT_END))
+	switch(smtp_write(s,1,messagebody,NULL,250,SMTP_TIMEOUT_END))
+	{
+	  case -1:
 		return -1;
+
+	  case 1:
+		if (last_status == 554)
+		{
+			for(p=0;users[p].addr;++p)
+			{
+				debug("SMTP: failing %s, status %d\n",users[p].addr,last_status);
+				users[p].statcode= (unk_addr<<16);
+				users[p].statcode |= last_status;
+				rcpt_fail++;
+			}
+			return -2;	/* no valid recipients */
+		}
+		else
+		{
+			return -1;
+		}
+	}
+		
 
 	/* The message is now committed, methinks.  But we wait anyways */
 
@@ -417,7 +478,7 @@ static int lookfor(int s,int code,int alarmtime)
 		return 0;
 	}
 
-	if(setjmp(jmpbuf))
+	if(sigsetjmp(jmpbuf, 1))
 	{
 		debug("SMTP: Timed out looking for %d\n",code);
 		alarm(0);
@@ -492,5 +553,5 @@ restart:
 
 static void handle_alarm(int dummy)
 {
-	longjmp(jmpbuf,1);
+	siglongjmp(jmpbuf,1);
 }
