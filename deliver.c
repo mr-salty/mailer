@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.16  1996/05/02 19:07:00  tjd
+ * rewrote all of the debug code.
+ *
  * Revision 1.15  1996/04/15 16:36:42  tjd
  * added CONNECT_TIMEOUT for tcp connect() timeout
  * since linux's timeout is excruciatingly long...
@@ -62,7 +65,6 @@
 #include <setjmp.h>
 #include <ctype.h>
 
-
 #include "sendmail.h"
 #include "mailer_config.h"
 #include "userlist.h"
@@ -78,9 +80,6 @@ static int last_status;		/* status of last lookfor() */
 extern char *messagebody,*myhostname,*mailfrom;
 extern int messagebody_size;
 
-#ifdef ERROR_MESSAGES
-static char *hostname2;
-#endif
 
 static int delivermessage(char *addr,char *hostname, userlist users[]);
 static int lookfor(int s,int code,int alarmtime);
@@ -90,13 +89,40 @@ static int in_child=0;
 extern void signal_backend();
 static userlist *gl_users=NULL;
 
+#ifdef DEBUG_SMTP
+static char *hostname2;	/* filled in by deliver() */
+#endif
+
+#include <stdarg.h>
+void debug(char *format,...) {
+#ifdef DEBUG_SMTP
+    static FILE *fpLog = 0;
+    char dlog[MAX_HOSTNAME_LEN+20];
+    va_list ap;
+    va_start(ap,format);
+
+    if(!format) {
+	if(fpLog) fclose(fpLog);
+    }
+    else {
+	if (!fpLog) {
+		sprintf(dlog,"debug/D%s.%05d",hostname2,getpid());
+		fpLog = fopen(dlog,"w");
+	}
+    	if(fpLog) {
+		vfprintf(fpLog,format,ap);
+	}
+    }
+    va_end(ap);
+#endif
+}
+
 void handle_sig(int sig)
 {
 	if(in_child)
 	{
-#ifdef ERROR_MESSAGES
-		fprintf(stderr,"Warning: pid %d caught signal %d, failing.\n",getpid(),sig);
-#endif
+		debug("Warning: pid %d caught signal %d, failing.\n",getpid(),sig);
+		debug(NULL);
 		exit(bounce(gl_users,(caught_signal<<16) | sig));
 	}
 	else
@@ -117,11 +143,13 @@ int deliver(char *hostname,userlist users[])
 	char *mxhosts[MAXMXHOSTS+1];
 	in_child=1;
 	gl_users=users;
-#ifdef ERROR_MESSAGES
+#ifdef DEBUG_SMTP
 	hostname2=hostname;
 #endif
+	debug("Hostname: %s\n",hostname);
 
 	nmx=getmxrr(hostname,mxhosts,FALSE,&rcode);
+	debug("Number of MX records: %d\n",nmx);
 
 	if (nmx<=0)
 	{
@@ -132,6 +160,7 @@ int deliver(char *hostname,userlist users[])
 	for(i=0;i<nmx;++i)
 	{
 		/* try to deliver to each host */
+		debug("MX %d: %s\n",i,mxhosts[i]);
 
 		if(!(host=gethostbyname(mxhosts[i])))
 		{
@@ -141,10 +170,7 @@ int deliver(char *hostname,userlist users[])
 			}
 			else
 			{
-#ifdef ERROR_MESSAGES
-				sprintf(buf,"gethostbyname(%s)",mxhosts[i]);
-				perror(buf);
-#endif
+				debug("gethostbyname() failed\n");
 				deliver_status=-1;
 			}
 		}
@@ -159,6 +185,8 @@ int deliver(char *hostname,userlist users[])
 		if(deliver_status != -1) break;
 	}
 
+	debug("Finished with status %d.\n",deliver_status);
+	debug(NULL);
 	switch(deliver_status)
 	{
 		case -1:	return bounce(users,(host_failure<<16));
@@ -167,16 +195,6 @@ int deliver(char *hostname,userlist users[])
 		default:	return bounce(users,0);	
 	}
 }
-
-
-
-#ifdef ERROR_MESSAGES
-void hperror(char *msg)
-{
-	sprintf(buf,"%s: %s",hostname2,msg);
-	perror(buf); 
-}
-#endif
 
 jmp_buf jmpbuf; /* for alarm */
 static void handle_alarm(int dummy);
@@ -204,25 +222,19 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 
 	if((s=socket(AF_INET,SOCK_STREAM,0)) == -1)
 	{
-#ifdef ERROR_MESSAGES
-		hperror("socket");
-#endif
+		debug("socket: errno=%d\n",errno);
 		return -1;
 	}
 
 	if(signal(SIGALRM,handle_alarm)==SIG_ERR)
 	{
-#ifdef ERROR_MESSAGES
-		hperror("signal (connect alarm)");
-#endif
+		debug("signal (connect alarm): errno %d\n",errno);
 		return -1;
 	}
 
 	if(setjmp(jmpbuf))
 	{
-#ifdef DEBUG
-		fprintf(stderr,"Timed out during connect()\n");
-#endif
+		debug("Timed out during connect()\n");
 		alarm(0);
 		return -1;
 	}
@@ -231,13 +243,12 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	if(connect(s,(struct sockaddr *)&sock,sizeof(struct sockaddr_in)) == -1)
 	{
 		alarm(0);
-#ifdef ERROR_MESSAGES
-		hperror("connect");
-#endif
+		debug("connect() failed: errno %d\n",errno);
 		close(s);
 		return -1;
 	}
 	alarm(0);
+	debug("SMTP: Connected.\n");
 #endif /* NO_DELIVERY */
 
 	if(smtp_write(s,1,NULL,NULL,220,SMTP_TIMEOUT_WELCOME)) 
@@ -264,6 +275,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 			case -1:	return -1;
 
 			case 1:
+					debug("failing %s with status %d\n",users[p].addr,last_status);
 					users[p].statcode=(unk_addr<<16);
 					users[p].statcode |= last_status;
 					rcpt_fail++;
@@ -272,7 +284,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	}
 	if(p==rcpt_fail) return -2;	/* no valid recipients */
 
-	if(smtp_write(s,1,"DATA\r\n",NULL,354,SMTP_TIMEOUT_DATA))
+	if(smtp_write(s,1,"%s","DATA\r\n",354,SMTP_TIMEOUT_DATA))
 		return -1;
 
 	if(smtp_write(s,1,messagebody,NULL,250,SMTP_TIMEOUT_END))
@@ -280,7 +292,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 
 	/* The message is now committed, methinks.  But we wait anyways */
 
-	if(smtp_write(s,1,"QUIT\r\n",NULL,221,SMTP_TIMEOUT_END))
+	if(smtp_write(s,1,"%s","QUIT\r\n",221,SMTP_TIMEOUT_END))
 		return rcpt_fail;
 
 	close(s);
@@ -306,25 +318,22 @@ static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,int timeou
 		if(arg != NULL) {
 			sprintf(buf,fmt,arg);
 			wbuf=buf;
+			debug("%s",wbuf);
 		} else {
 			wbuf=fmt;
+			debug("SMTP: [Message body omitted]\n");
 		}
 
 #ifndef NO_DELIVERY
 		if(write(s,wbuf,strlen(wbuf)) == -1)
 		{
-#ifdef ERROR_MESSAGES
-			hperror("write");
-#endif
+			debug("write: errno %d\n",errno);
 			close(s);
 			return -1;
 		}
 	}
 
 	if(!lookfor(s,look,timeout)) {
-#ifdef ERROR_MESSAGES
-		fprintf(stderr,"%s: No %d response to %s",hostname2,look,buf);
-#endif
 		if(close_s) close(s);
 		return 1;
 #endif /* NO_DELIVERY */
@@ -342,17 +351,13 @@ static int lookfor(int s,int code,int alarmtime)
 restart:
 	if(signal(SIGALRM,handle_alarm)==SIG_ERR)
 	{
-#ifdef ERROR_MESSAGES
-		hperror("signal (alarm)");
-#endif
+		debug("signal (alarm): errnot %d\n",errno);
 		return 0;
 	}
 
 	if(setjmp(jmpbuf))
 	{
-#ifdef DEBUG
-		fprintf(stderr,"Timed out looking for %d\n",code);
-#endif
+		debug("Timed out looking for %d\n",code);
 		alarm(0);
 		return 0;
 	}
@@ -361,19 +366,14 @@ restart:
 	if((len=read(s,buf,TMPBUFLEN-1))<=0)
 	{
 		alarm(0);
-#ifdef ERROR_MESSAGES
-		hperror("read (SMTP connection)");
-#endif
+		debug("read (SMTP connection): errno %d\n",errno);
 		return 0;
 	}
 	alarm(0);
 
 	ptr=buf;
 	buf[len]='\0';
-
-#ifdef DEBUG_SMTP
-	fprintf(stderr,"SMTP: %s\n",buf);
-#endif
+	debug("%s",buf);
 
 	while(!isdigit(ptr[0]) || !isdigit(ptr[1]) ||
 	      !isdigit(ptr[2]) || ptr[3] != ' ')
@@ -387,17 +387,13 @@ restart:
 
 	last_status=atoi(buf);
 
-#ifdef DEBUG_SMTP
-	fprintf(stderr,"SMTP: got code %d\n",last_status);
-#endif
+	debug("SMTP: got code %d\n",last_status);
 
 	if(code == last_status || (code==251 && last_status==250) || (code==354 && last_status == 250)) /* special cases */
 		return 1;
 	else
 	{
-#ifdef DEBUG
-		fprintf(stderr,"Error, expected %d got %d\n",code,last_status);
-#endif
+		debug("Error: expected %d got %d\n",code,last_status);
 		return 0;
 	}
 }
