@@ -32,7 +32,10 @@
  * SUCH DAMAGE.
  *
  * $Log: arpadate.c,v $
- * Revision 1.1  1995/12/14 15:23:30  tjd
+ * Revision 1.2  1996/01/01 22:05:30  tjd
+ * added unistd.h for NULL on sun
+ *
+ * Revision 1.1  1995/12/14  15:23:30  tjd
  * Initial revision
  *
  */
@@ -44,6 +47,7 @@ static char sccsid[] = "@(#)arpadate.c	8.1 (Berkeley) 6/7/93";
 #endif
 
 /* # include "sendmail.h" */
+#include <unistd.h>
 #include <sys/time.h>
 
 /*
