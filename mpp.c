@@ -1,5 +1,8 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.9  1997/11/24 22:39:54  tjd
+ * made the From: header get tweaked by TWEAK_FROMADDR as well
+ *
  * Revision 1.8  1997/11/24 03:29:53  tjd
  * bumped version to 1.2a (TWEAK_FROMADDR change)
  *
@@ -50,13 +53,15 @@ int main(int argc, char *argv[])
 	char line[MAX_LINE_LEN+1];
 	char *message,*p;
 	char *longdate;
+	char from_addr[MAX_ADDR_LEN + 1];
+	char *user,*host;
 	time_t utime;
 	struct tm *ltime;
 	int hdr,reqhdr;
 
 	if(argc != 4)
 	{
-		fprintf(stderr,"Usage: mpp msgfile tmpfile from_hostname\n");
+		fprintf(stderr,"Usage: mpp msgfile tmpfile from_addr\n");
 		exit(1);
 	}
 
@@ -84,6 +89,17 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	/* break from_addr into user@host */
+	strcpy(from_addr, argv[3]);
+	host=rindex(from_addr,'@');
+	if(host == (char *) NULL) {
+	    fprintf(stderr,"Couldn't parse %s into user@host\n",from_addr);
+	    exit(1);
+	}
+	*host='\0';
+	++host;
+	user=from_addr;
+
 	p=message;
 
 #define H_FROM	1
@@ -102,8 +118,8 @@ int main(int argc, char *argv[])
 	utime=time(NULL);
 	ltime = localtime(&utime);
 	sprintf(p,"Received: from local (localhost)\r\n"
-		  "          by %s (mailer 1.2a) with SMTP;\r\n"
-		  "          %s\r\n",argv[3],longdate);
+		  "          by %s (mailer 1.3a) with SMTP;\r\n"
+		  "          %s\r\n",host,longdate);
 	p+=strlen(p);
 	sprintf(p,"Date: %s\r\n",longdate);
 	p+=strlen(p);
@@ -115,7 +131,7 @@ int main(int argc, char *argv[])
 #else
 			"",
 #endif
-			argv[3]);
+			host);
 
 	p+=strlen(p);
 
@@ -186,6 +202,26 @@ int main(int argc, char *argv[])
 			{
 				fprintf(stderr,"Warning: discarding extra header: %s",line);			continue;
 			}
+
+#if defined(TWEAK_FROMADDR)
+			if(newhdr == H_FROM) {
+			    char *aptr;
+			    aptr=index(line,'<');
+			    if(aptr == (char *) NULL) {
+				aptr=index(line,'\r');
+			    } else {
+				--aptr;
+			    }
+			    /* be careful that this looks like the message-id
+			     * above!
+			     */
+			    sprintf(aptr," <%s+%04d%02d%02d%s@%s>\r\n", user,
+				ltime->tm_year+1900, ltime->tm_mon+1,
+				ltime->tm_mday,
+				".\xff""00000.000", host);
+
+			}
+#endif
 
 			reqhdr |= newhdr;
 		}

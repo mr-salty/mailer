@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.30  1997/11/24 22:39:54  tjd
+ * made the From: header get tweaked by TWEAK_FROMADDR as well
+ *
  * Revision 1.29  1997/11/24 21:45:57  tjd
  * added TWEAK_FROMADDR
  *
@@ -139,8 +142,8 @@ static char *idptr;
 
 #if defined(TWEAK_FROMADDR)
 extern char *mailfrom;
-static char *f_idptr, *f_atptr;
-static int f_idlen, f_userlen;
+static char *f_idptr, *f_addrptr;
+static int f_addrlen;
 #endif
 #endif
 
@@ -175,13 +178,11 @@ void do_list(char *fname)
 	/* mpp puts this here for us.  '\xff'00000.000 */
 	idptr=index(messagebody,'\xff');
 #if defined(TWEAK_FROMADDR)
-	/* find the component before (i.e. the date), and the length of ID */
-	for(f_idptr=(idptr-1) ; *(f_idptr-1) != '.'; --f_idptr) {} 
-	f_idlen=index(f_idptr,'@') - f_idptr;
-
-	/* parse the mailfrom variable into user@host */
-	f_atptr=index(mailfrom,'@');
-	f_userlen=f_atptr-mailfrom;
+	f_idptr=index(idptr+1, '\xff');
+	
+	/* find the start and length of the whole address */
+	for(f_addrptr=(f_idptr) ; *(f_addrptr-1) != '<'; --f_addrptr) {} 
+	f_addrlen=index(f_addrptr,'>') - f_addrptr;
 #endif
 #endif
 
@@ -412,14 +413,9 @@ static void do_delivery(int debug_flag)
 	memcpy(idptr, buf, 10);
 
 #if defined(TWEAK_FROMADDR)
-	if(batch_size==1) {
-	    /* make msg_from look like 'user+ID@host' */
-	    strncpy(msg_from,mailfrom,f_userlen);
-	    msg_from[f_userlen]='\0';
-	    strcat(msg_from,"+");
-	    strncat(msg_from,f_idptr,f_idlen);
-	    strcat(msg_from,f_atptr);
-	}
+	memcpy(f_idptr,buf,10);
+	strncpy(msg_from, f_addrptr, f_addrlen);
+	msg_from[f_addrlen]='\0';
 #endif
 #endif
 
@@ -437,10 +433,8 @@ retryfork:
 		case 0:
 			for(i=0;i<OPEN_MAX;++i) close(i);
 #if defined(TWEAK_FROMADDR) && defined(TWEAK_MSGID)
-			if(batch_size==1) {
-			    /* make deliver() use our tweaked from address */
-			    mailfrom = msg_from;
-			}
+			/* make deliver() use our tweaked from address */
+			mailfrom = msg_from;
 #endif
 			exit(deliver(curhost,users,debug_flag));
 

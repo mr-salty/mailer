@@ -1,5 +1,8 @@
 /*
  * $Log: readmessage.c,v $
+ * Revision 1.5  1997/11/24 22:39:54  tjd
+ * made the From: header get tweaked by TWEAK_FROMADDR as well
+ *
  * Revision 1.4  1996/03/04 04:03:22  tjd
  * changed PATH_MAX to MAXPATHLEN for filename buffer
  *
@@ -29,7 +32,7 @@
 
 #include "mailer_config.h"
 
-extern char *messagebody,*myhostname;
+extern char *messagebody,*mailfrom;
 extern int messagebody_size;
 
 static void failmpp(char *message)
@@ -46,7 +49,7 @@ void readmessage(char *filename,char *mpp)
 	int fd;
 
 	sprintf(outfname,"/tmp/mpp.%d",getpid());
-	sprintf(cmd,"%s %s %s %s",mpp,filename,outfname,myhostname);
+	sprintf(cmd,"%s %s %s %s",mpp,filename,outfname,mailfrom);
 
 	if(system(cmd))
 		failmpp("exec");
