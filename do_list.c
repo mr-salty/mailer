@@ -1,5 +1,9 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.33  1998/03/02 23:57:19  tjd
+ * fixed bug with status reporting and delivery rate calculation when skipping
+ * addresses.
+ *
  * Revision 1.32  1998/02/17 18:04:04  tjd
  * improved signal handling for INT/TERM/HUP, parent will wait for children
  * to exit and try to kill them if they don't
@@ -131,7 +135,7 @@ static userlist users[ADDRS_PER_BUF+1];	  /* +1 for null marker at end */
 
 static int numchildren=0,delivery_rate=TARGET_RATE;
 static int numforks=0,numprocessed=0,numfailed=0;
-static int skip_addrs = 0;
+static int real_numprocessed=0,skip_addrs = 0;
 static int list_line = 0, batch_id = 0, batch_size = 0;
 static int max_child,min_child,target_rate;
 
@@ -217,7 +221,7 @@ void do_list(char *fname)
 
 	while((hostlen=parse_address(f,&next,&addr,&host)))
 	{
-		if(numprocessed >= next_status)
+		if(real_numprocessed >= next_status)
 		{
 			do_status();
 			next_status+=STATUS;
@@ -318,6 +322,7 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host)
 
 		++list_line;
 		++numprocessed;
+		++real_numprocessed;
 		a_start=a_buf;
 
 		/* find the end of the address */
@@ -345,10 +350,12 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host)
 		++p;
 		if(p==a_buf) {				/* blank line */
 			numprocessed--;
+			real_numprocessed--;
 			continue;
 		}
 
 		if(numprocessed <= skip_addrs) {
+		    real_numprocessed=0;
 		    continue;
 		}
 
@@ -567,7 +574,7 @@ static void do_status()
 	if((len=strlen(timebuf)))
 		timebuf[len-1]='\0';
 
-	if(numprocessed==0)
+	if(real_numprocessed==0)
 	{
 		fprintf(sf,"%s: Starting list processing.\n",timebuf);
 	}
@@ -582,8 +589,8 @@ static void do_status()
 
 		fprintf(sf,"%s: p=%d n=%d d=%d f=%d/%2.1f%% t=%02d:%02d:%02d r=%d\n",
 		timebuf,numforks,numchildren,numprocessed,numfailed,
-		((float)numfailed/(float)numprocessed)*100.0,
-		h,m,s,delivery_rate=(int)(numprocessed/((float)diff/3600.0)));
+		((float)numfailed/(float)real_numprocessed)*100.0,
+		h,m,s,delivery_rate=(int)(real_numprocessed/((float)diff/3600.0)));
 	}
 	fflush(sf);
 }
