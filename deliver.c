@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.2  1995/12/27 18:05:44  tjd
+ * added NO_DELIVERY
+ *
  * Revision 1.1  1995/12/14 15:23:30  tjd
  * Initial revision
  *
@@ -114,6 +117,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	struct sockaddr_in sock;
 	int rcpt_fail;
 
+#ifndef NO_DELIVERY
 	sock.sin_family=AF_INET;
 	sock.sin_port=htons(SMTP_PORT);
 	bcopy(addr,&sock.sin_addr,sizeof sock.sin_addr);
@@ -134,6 +138,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 		close(s);
 		return -1;
 	}
+#endif /* NO_DELIVERY */
 
 	if(smtp_write(s,1,NULL,NULL,220,SMTP_TIMEOUT_WELCOME)) 
 		return -1;
@@ -187,11 +192,11 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 
 static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,int timeout)
 {
-
 	if(fmt != NULL)
 	{
 		sprintf(buf,fmt,arg);
 
+#ifndef NO_DELIVERY
 		if(write(s,buf,strlen(buf)) == -1)
 		{
 #ifdef ERROR_MESSAGES
@@ -208,6 +213,7 @@ static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,int timeou
 #endif
 		if(close_s) close(s);
 		return 1;
+#endif /* NO_DELIVERY */
 	}
 	return 0;
 }

@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.2  1995/12/27 18:06:50  tjd
+ * added NO_DELIVERY
+ *
  * Revision 1.1  1995/12/14 15:23:30  tjd
  * Initial revision
  *
@@ -12,6 +15,7 @@
 #undef DEBUG		/* general debugging */
 #undef DEBUG_SMTP	/* SMTP replies from host (LOTS of output!!!) */
 #undef NO_FORK		/* useful to debug deliver() */
+#undef NO_DELIVERY	/* fake delivery if defined */
 #undef ERROR_MESSAGES 	/* generate error messages */
 
 /* general params */
