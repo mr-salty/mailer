@@ -1,5 +1,9 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.6  1997/10/11 07:07:05  tjd
+ * bumped version to 1.1a
+ * also removed the 'rand' in the message id and replaced it with the date
+ *
  * Revision 1.5  1997/08/14 16:01:52  tjd
  * added TWEAK_MSGID stuff
  *
@@ -38,6 +42,9 @@ int main(int argc, char *argv[])
 	struct stat sbuf;
 	char line[MAX_LINE_LEN+1];
 	char *message,*p;
+	char *longdate;
+	time_t utime;
+	struct tm *ltime;
 	int hdr,reqhdr;
 
 	if(argc != 4)
@@ -84,14 +91,18 @@ int main(int argc, char *argv[])
 	 * "Received", "Date", "From", "Subject", "Sender", "To"
 	 */
 
+	longdate=arpadate(NULL);
+	utime=time(NULL);
+	ltime = localtime(&utime);
 	sprintf(p,"Received: from local (localhost)\r\n"
-		  "          by %s (mailer 1.0b) with SMTP;\r\n"
-		  "          %s\r\n",argv[3],arpadate(NULL));
+		  "          by %s (mailer 1.1a) with SMTP;\r\n"
+		  "          %s\r\n",argv[3],longdate);
 	p+=strlen(p);
-	sprintf(p,"Date: %s\r\n",arpadate(NULL));
+	sprintf(p,"Date: %s\r\n",longdate);
 	p+=strlen(p);
-	sprintf(p,"Message-Id: <%s.%d.%d%s@%s>\r\n",
-			HEADER_HEADER,(int)time(NULL),rand(),
+	sprintf(p,"Message-Id: <%s.%d.%04d%02d%02d%s@%s>\r\n",
+			HEADER_HEADER,(int)time(NULL),
+			ltime->tm_year+1900, ltime->tm_mon+1, ltime->tm_mday,
 #ifdef TWEAK_MSGID
 			".\xff""00000",
 #else
