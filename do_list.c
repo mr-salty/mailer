@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.4  1995/12/28 18:09:01  tjd
+ * fixed placement of wait_timeout, argh.
+ *
  * Revision 1.3  1995/12/28 18:06:58  tjd
  * added timeout at end of loop waiting for children
  *
@@ -46,7 +49,7 @@ static void do_status()
 	static time_t start=0;
 	char timebuf[80];
 	time_t now,diff;
-	int len,h,m,s,wait_timeout;
+	int len,h,m,s;
 
 	if(sf==NULL)
 	{
@@ -90,7 +93,7 @@ void do_list(char *fname)
 {
 	FILE *f;
 
-	int inbuf,tmplen;
+	int inbuf,tmplen,wait_timeout;
 	char *current,*start,*next,*user,*tmphost,*p;
 
 #if 0
