@@ -32,6 +32,9 @@
  * SUCH DAMAGE.
  *
  * $Log: domain.c,v $
+ * Revision 1.2  1997/10/11 02:47:02  tjd
+ * get rid of some compiler warnings
+ *
  * Revision 1.1  1995/12/14 15:23:30  tjd
  * Initial revision
  *
@@ -163,7 +166,7 @@ int getmxrr(char *host, char **mxhosts, bool droplocalhost, int *rcode)
 		goto punt;
 
 	errno = 0;
-	n = res_search(host, C_IN, T_MX, (char *)&answer, sizeof(answer));
+	n = res_search(host, C_IN, T_MX, (u_char *)&answer, sizeof(answer));
 	if (n < 0)
 	{
 #if 0
@@ -568,7 +571,7 @@ cnameloop:
 				qtype == T_MX ? "MX" : "???");
 #endif
 		ret = res_querydomain(host, *dp, C_IN, qtype,
-				      &answer, sizeof(answer));
+				      (char *)&answer, sizeof(answer));
 		if (ret <= 0)
 		{
 #if 0
