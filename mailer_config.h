@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.18  1999/09/07 15:39:10  tjd
+ * Make the end-wait timeout tuneable and reduce it from 60 to 20 minutes
+ *
  * Revision 1.17  1998/04/17 00:37:10  tjd
  * changed config file format
  * added config flags and associated definitions
@@ -149,6 +152,9 @@ typedef short 		flags_t;
 #define SMTP_TIMEOUT_RCPT	300
 #define SMTP_TIMEOUT_DATA	120
 #define SMTP_TIMEOUT_END	600
+
+/* how long (in sec) to wait for children to finish at the end of processing */
+#define END_WAIT_TIMEOUT	(20 * 60)
 
 #ifdef sun
 #define memmove(D,S,L)	bcopy(S,D,L)

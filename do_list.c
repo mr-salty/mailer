@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.38  1999/09/07 15:39:10  tjd
+ * Make the end-wait timeout tuneable and reduce it from 60 to 20 minutes
+ *
  * Revision 1.37  1999/08/11 04:48:29  tjd
  * fix a bug where the parent would get stuck in a loop if we ran out of
  * processes.  now we call handle_child() in that case to reap zombies.
@@ -342,7 +345,7 @@ void do_list(char *fname)
 
 	/* loop and wait for the children to exit.  */
 	wait_timeout=0;
-	while(numchildren && ++wait_timeout < 720) /* wait an hour */
+	while(numchildren && ++wait_timeout < (END_WAIT_TIMEOUT / 5)) 
 	{
 		sleep(5);
 		handle_child();
