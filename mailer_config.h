@@ -1,5 +1,9 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.8  1996/04/16 14:58:58  tjd
+ * tuned the scheduler; we now have a TARGET_RATE and the scheduler
+ * dynamically adapts to try to meet it.
+ *
  * Revision 1.7  1996/04/16 04:57:32  tjd
  * added defines for the scheduler (MAX_CHILD,MIN_CHILD)
  *
@@ -52,8 +56,11 @@
 #define MAX_HOSTNAME_LEN 64	/* hostname limit: RFC821 */
 #define ADDRS_PER_BUF   100	/* max # of addresses per buffer: RFC821 */
 #define BUFFER_LEN   	4096	/* single delivery attempt buffer */
+
+/* scheduler parameters */
 #define MAX_CHILD	90	/* max # of deliver children */
 #define MIN_CHILD	15	/* min # of deliver children */
+#define TARGET_RATE	6500	/* target rate in deliveries per hour */
 
 /* SMTP: timeouts as defined in RFC1123 */
 #define CONNECT_TIMEOUT		300	/* timeout for tcp connect() */

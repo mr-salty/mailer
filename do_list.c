@@ -1,5 +1,9 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.12  1996/04/16 14:58:58  tjd
+ * tuned the scheduler; we now have a TARGET_RATE and the scheduler
+ * dynamically adapts to try to meet it.
+ *
  * Revision 1.11  1996/04/16 04:57:13  tjd
  * added a scheduler!
  *
@@ -60,7 +64,7 @@ static char curhost[MAX_HOSTNAME_LEN+1];  /* +1 for null */
 static char buf[BUFFER_LEN+1];		  /* +1 for temp newline (null) */
 static userlist users[ADDRS_PER_BUF+1];	  /* +1 for null marker at end */
 
-static int numchildren=0,child_limit=MIN_CHILD;
+static int numchildren=0,child_limit=MIN_CHILD,delivery_rate=TARGET_RATE;
 
 static void do_delivery();
 static void handle_child();
@@ -108,7 +112,7 @@ static void do_status()
 		fprintf(sf,"%s: p=%d n=%d d=%d f=%d/%2.1f%% t=%02d:%02d:%02d r=%d\n",
 		timebuf,numforks,numchildren,numprocessed,numfailed,
 		((float)numfailed/(float)numprocessed)*100.0,
-		h,m,s,(int)(numprocessed/((float)diff/3600.0)));
+		h,m,s,delivery_rate=(int)(numprocessed/((float)diff/3600.0)));
 	}
 	fflush(sf);
 }
@@ -345,6 +349,10 @@ void do_list(char *fname)
 		do_delivery();
 	}
 
+#ifdef STATUS
+	do_status();
+#endif
+
 	wait_timeout=0;
 	while(numchildren && ++wait_timeout < 720) /* wait an hour */
 	{
@@ -367,8 +375,22 @@ static void do_delivery()
 	while(numchildren >= child_limit)
 	{
 		int old_numch=numchildren;
+		int mc_factor=1;
+
 		sleep(2);
 		handle_child();
+
+		/* mc_factor is a scheduling parameter that controls how
+		 * likely we are to start a new child.  We try to
+		 * keep within 10% of our target.
+		 */
+
+		if(delivery_rate < (int)(0.9 * TARGET_RATE))
+			mc_factor=2;
+		else if(delivery_rate > (int)(1.1 * TARGET_RATE))
+			mc_factor=0;
+		else
+			mc_factor=1;
 
 		/* this is the "scheduler".
 		 * we want an average of 1 child every 2 seconds, so we
@@ -378,7 +400,7 @@ static void do_delivery()
 			child_limit++;
 			if(child_limit > MAX_CHILD) child_limit=MAX_CHILD;
 		}
-		else if(old_numch-1 <= numchildren) {
+		else if(old_numch-mc_factor <= numchildren) {
 			/* do nothing */
 		}
 		else {
