@@ -1,5 +1,9 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.21  1996/05/05 19:05:35  tjd
+ * errant logic when copying for a new host caused 'curhost' to get
+ * corrupted.  fixed.
+ *
  * Revision 1.20  1996/05/04 21:24:23  tjd
  * small fixup for addresses ending in :
  *
@@ -153,12 +157,12 @@ void do_list(char *fname)
 				users[inbuf].addr=NULL;
 				do_delivery();
 
-				memmove(buf,addr,(next-addr));
 				strncpy(curhost,host,hostlen);
 				curhost[hostlen]='\0';
+				memmove(buf,addr,(next-addr));
+				next=buf+(next-addr);
 				users[0].addr=buf;
 				inbuf=1;
-				next=buf+(next-addr);
 				continue;
 			}
 		}
