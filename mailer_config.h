@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.3  1996/02/12 00:36:34  tjd
+ * added BOUNCE_FILE define
+ *
  * Revision 1.2  1995/12/27 18:06:50  tjd
  * added NO_DELIVERY
  *
@@ -21,6 +24,9 @@
 /* general params */
 #define HEADER_HEADER	"AWAD"
 #define MPP		"mpp"
+
+/* bounces file name */
+#define BOUNCE_FILE	"mailer.bounces"
 
 /* list processing parameters */
 #define MAX_ADDR_LEN    256	/* single address size limit: RFC821 */
