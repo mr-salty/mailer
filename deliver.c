@@ -1,6 +1,9 @@
 /*
  * $Log: deliver.c,v $
- * Revision 1.5  1996/01/02 00:29:11  tjd
+ * Revision 1.6  1996/01/02 00:34:47  tjd
+ * minor change to smtp_write for DATA and QUIT
+ *
+ * Revision 1.5  1996/01/02  00:29:11  tjd
  * added signal handling code
  *
  * Revision 1.4  1995/12/31  20:14:42  tjd
@@ -209,7 +212,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	}
 	if(p==rcpt_fail) return -2;	/* no valid recipients */
 
-	if(smtp_write(s,1,"%s\r\n","DATA",354,SMTP_TIMEOUT_DATA))
+	if(smtp_write(s,1,"DATA\r\n",NULL,354,SMTP_TIMEOUT_DATA))
 		return -1;
 
 	if(smtp_write(s,1,messagebody,NULL,250,SMTP_TIMEOUT_END))
@@ -217,7 +220,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 
 	/* The message is now committed, methinks.  But we wait anyways */
 
-	if(smtp_write(s,1,"%s\r\n","QUIT",221,SMTP_TIMEOUT_END))
+	if(smtp_write(s,1,"QUIT\r\n",NULL,221,SMTP_TIMEOUT_END))
 		return rcpt_fail;
 
 	close(s);
