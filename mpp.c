@@ -1,5 +1,9 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.2  1996/02/15 04:10:01  tjd
+ * write output to temp file rather than stdout (pipe)
+ * this in preparation for mmap()ing the message
+ *
  * Revision 1.1  1995/12/14 15:23:30  tjd
  * Initial revision
  *
@@ -18,17 +22,16 @@
 
 char *arpadate(char *);
 
-/* mpp msgfile hostname */
+/* mpp msgfile outfile hostname */
 int main(int argc, char *argv[])
 {
-	FILE *f;
+	FILE *f,*o;
 	struct stat sbuf;
 	char line[MAX_LINE_LEN+1];
 	char *message,*p;
 	int hdr,reqhdr;
-	int len;
 
-	if(argc != 3)
+	if(argc != 4)
 	{
 		fprintf(stderr,"Usage: mpp msgfile from_hostname\n");
 		exit(1);
@@ -49,6 +52,12 @@ int main(int argc, char *argv[])
 	if(!(f=fopen(argv[1],"r")))
 	{
 		perror("fopen (message)");
+		exit(1);
+	}
+
+	if(!(o=fopen(argv[2],"w")))
+	{
+		perror("fopen (temp file)");
 		exit(1);
 	}
 
@@ -91,7 +100,7 @@ int main(int argc, char *argv[])
 			sprintf(p,"Date: %s\r\n",arpadate(NULL));
 			p+=strlen(p);
 			sprintf(p,"Message-Id: <%s.%d.%d@%s>\r\n",
-				HEADER_HEADER,(int)time(NULL),rand(),argv[2]);
+				HEADER_HEADER,(int)time(NULL),rand(),argv[3]);
 			p+=strlen(p);
 		}
 
@@ -147,9 +156,8 @@ int main(int argc, char *argv[])
 	sprintf(p-2,"\r\n.\r\n");
 	p+=strlen(p);
 
-	len=p-message;
-
-	fwrite(&len,sizeof(int),1,stdout);
-	printf("%s",message);
-	return 1;
+	fprintf(o,"%s",message);
+	fclose(o);
+	fclose(f);
+	return 0;
 }
