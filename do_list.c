@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.27  1997/10/11 07:31:55  tjd
+ * make sure that the parameters don't get set to -1 (!)
+ *
  * Revision 1.26  1997/10/11 07:08:11  tjd
  * added support for mailer config file for debugging, batching, and setting
  * some parameters.
@@ -675,11 +678,11 @@ static int read_config_file(char *filename)
 	
 	/* special cases (parameters) */
 	if(!strcasecmp(hostp,"min_child")) {
-	    min_child = batch;
+	    min_child = ((batch > 0) ? batch : MIN_CHILD);
 	} else if(!strcasecmp(hostp,"max_child")) {
-	    max_child = batch;
+	    max_child = ((batch > 0) ? batch : MAX_CHILD);
 	} else if(!strcasecmp(hostp,"target_rate")) {
-	    target_rate = batch;
+	    target_rate = ((batch > 0) ? batch : TARGET_RATE);
 	} else {
 	    /* make a new record for this host */
 
