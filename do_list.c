@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.9  1996/02/12 00:49:37  tjd
+ * added some #includes to support open().
+ *
  * Revision 1.8  1996/02/12 00:42:29  tjd
  * added check to create BOUNCE_FILE
  *
@@ -30,6 +33,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <time.h>
