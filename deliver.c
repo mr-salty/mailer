@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.12  1996/01/02 06:14:39  tjd
+ * fix for braindead ultrix headers
+ *
  * Revision 1.11  1996/01/02 04:30:43  tjd
  * added SMTP status code to bounce messages
  *
@@ -37,8 +40,10 @@
  */
 
 #include <sys/types.h>
+#ifndef ultrix
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#endif
 #include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
