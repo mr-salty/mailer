@@ -1,5 +1,9 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.3  1995/12/27 18:56:45  tjd
+ * fixed problem where messagebody was copied into a buffer
+ * that was probably too small to contain it.
+ *
  * Revision 1.2  1995/12/27 18:05:44  tjd
  * added NO_DELIVERY
  *
@@ -170,7 +174,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	if(smtp_write(s,1,"%s\r\n","DATA",354,SMTP_TIMEOUT_DATA))
 		return -1;
 
-	if(smtp_write(s,1,"%s",messagebody,250,SMTP_TIMEOUT_END))
+	if(smtp_write(s,1,messagebody,NULL,250,SMTP_TIMEOUT_END))
 		return -1;
 
 	/* The message is now committed, methinks.  But we wait anyways */
@@ -188,16 +192,24 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
  *		 1 if the lookfor failed	(close s if close_s is true)
  *
  * if fmt is NULL we don't do the write, just lookfor.
+ * if arg is NULL we don't sprintf, but use fmt as the pointer.
  */
 
 static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,int timeout)
 {
+	char *wbuf;
+
 	if(fmt != NULL)
 	{
-		sprintf(buf,fmt,arg);
+		if(arg != NULL) {
+			sprintf(buf,fmt,arg);
+			wbuf=buf;
+		} else {
+			wbuf=fmt;
+		}
 
 #ifndef NO_DELIVERY
-		if(write(s,buf,strlen(buf)) == -1)
+		if(write(s,wbuf,strlen(wbuf)) == -1)
 		{
 #ifdef ERROR_MESSAGES
 			hperror("write");
