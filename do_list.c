@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.23  1996/05/27 18:47:24  tjd
+ * close all fd's after fork()
+ *
  * Revision 1.22  1996/05/05 19:06:38  tjd
  * fixed off-by-one error when showing status.
  *
@@ -330,6 +333,7 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host)
 
 static void do_delivery()
 {
+	int i;
 #ifndef NO_FORK
 	schedule();	/* blocks until we can start another */
 
@@ -342,6 +346,7 @@ retryfork:
 #endif
 			goto retryfork;
 		case 0:
+			for(i=0;i<OPEN_MAX;++i) close(i);
 			exit(deliver(curhost,users));
 
 		default:
