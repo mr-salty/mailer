@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.13  1996/05/04 20:51:04  tjd
+ * but def for memmove() for sun at the end.
+ *
  * Revision 1.12  1996/05/04 18:25:26  tjd
  * made DEBUG_SMTP defined by default.
  *
@@ -88,3 +91,7 @@
 #define SMTP_TIMEOUT_RCPT	300
 #define SMTP_TIMEOUT_DATA	120
 #define SMTP_TIMEOUT_END	600
+
+#ifdef sun
+#define memmove(D,S,L)	bcopy(S,D,L)
+#endif
