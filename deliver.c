@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.14  1996/03/21 19:27:43  tjd
+ * added NULL_RETURN_PATH define
+ *
  * Revision 1.13  1996/03/04 15:00:14  tjd
  * bracketed signal warnings with ERROR_MESSAGES
  *
@@ -216,8 +219,11 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 
 	if(smtp_write(s,1,"HELO %s\r\n",myhostname,250,SMTP_TIMEOUT_HELO))
 		return -1;
-
+#ifdef NULL_RETURN_PATH
+	if(smtp_write(s,1,"MAIL FROM:<>\r\n",NULL,250,SMTP_TIMEOUT_MAIL))
+#else
 	if(smtp_write(s,1,"MAIL FROM:<%s>\r\n",mailfrom,250,SMTP_TIMEOUT_MAIL))
+#endif /* NULL_RETURN_PATH */
 		return -1;
 
 	rcpt_fail=0;

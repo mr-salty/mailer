@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.4  1996/03/21 19:28:53  tjd
+ * added NULL_RETURN_PATH define
+ *
  * Revision 1.3  1996/02/12 00:36:34  tjd
  * added BOUNCE_FILE define
  *
@@ -27,6 +30,11 @@
 
 /* bounces file name */
 #define BOUNCE_FILE	"mailer.bounces"
+
+/* do we want bounce mail from remote SMTPs to be discarded at the source?
+ * defining this will send MAIL FROM:<>.  Probably not a good idea.
+ */
+#undef NULL_RETURN_PATH
 
 /* list processing parameters */
 #define MAX_ADDR_LEN    256	/* single address size limit: RFC821 */
