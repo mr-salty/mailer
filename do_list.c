@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.8  1996/02/12 00:42:29  tjd
+ * added check to create BOUNCE_FILE
+ *
  * Revision 1.7  1996/01/02 04:30:43  tjd
  * added SMTP status code to bounce messages
  *
@@ -161,6 +164,13 @@ void do_list(char *fname)
 		perror("Can't open list file");
 		exit(1);
 	}
+
+	if((i=open(BOUNCE_FILE,O_CREAT|O_TRUNC|O_WRONLY,0666)) == -1)
+	{
+		perror("Can't create bounce file");
+		exit(1);
+	}
+	close(i);
 
 	next=buf;
 	inbuf=0;
