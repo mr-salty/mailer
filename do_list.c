@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.13  1996/04/17 14:47:39  tjd
+ * more scheduler tning; decreased tolerance band to 5%
+ *
  * Revision 1.12  1996/04/16 14:58:58  tjd
  * tuned the scheduler; we now have a TARGET_RATE and the scheduler
  * dynamically adapts to try to meet it.
@@ -385,9 +388,9 @@ static void do_delivery()
 		 * keep within 10% of our target.
 		 */
 
-		if(delivery_rate < (int)(0.9 * TARGET_RATE))
+		if(delivery_rate < (int)(0.95 * TARGET_RATE))
 			mc_factor=2;
-		else if(delivery_rate > (int)(1.1 * TARGET_RATE))
+		else if(delivery_rate > (int)(1.05 * TARGET_RATE))
 			mc_factor=0;
 		else
 			mc_factor=1;
