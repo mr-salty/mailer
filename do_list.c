@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.22  1996/05/05 19:06:38  tjd
+ * fixed off-by-one error when showing status.
+ *
  * Revision 1.21  1996/05/05 19:05:35  tjd
  * errant logic when copying for a new host caused 'curhost' to get
  * corrupted.  fixed.
@@ -135,7 +138,7 @@ void do_list(char *fname)
 
 	while((hostlen=parse_address(f,&next,&addr,&host)))
 	{
-		if(numprocessed > next_status)
+		if(numprocessed >= next_status)
 		{
 			do_status();
 			next_status+=STATUS;
