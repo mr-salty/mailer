@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.31  1998/02/17 16:28:52  tjd
+ * added skip_addrs function
+ *
  * Revision 1.30  1997/11/24 22:39:54  tjd
  * made the From: header get tweaked by TWEAK_FROMADDR as well
  *
@@ -124,6 +127,7 @@ static userlist users[ADDRS_PER_BUF+1];	  /* +1 for null marker at end */
 
 static int numchildren=0,delivery_rate=TARGET_RATE;
 static int numforks=0,numprocessed=0,numfailed=0;
+static int skip_addrs = 0;
 static int list_line = 0, batch_id = 0, batch_size = 0;
 static int max_child,min_child,target_rate;
 
@@ -155,6 +159,17 @@ void do_list(char *fname)
 	char *next,*addr,*host;
 	int addrs_per_buf = ADDRS_PER_BUF;
 	int debug_flag = 0;
+	char *pskip;
+
+	/* check for a +number_of_lines_to_skip in the filename */
+	pskip=strrchr(fname,'+');
+	if(pskip != NULL) {
+	    *pskip='\0';
+	    skip_addrs=atoi(++pskip);
+	    if(skip_addrs <= 0) {
+		skip_addrs=0;
+	    }
+	}
 
 	if(!(f=fopen(fname,"r")))
 	{
@@ -327,6 +342,10 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host)
 		if(p==a_buf) {				/* blank line */
 			numprocessed--;
 			continue;
+		}
+
+		if(numprocessed <= skip_addrs) {
+		    continue;
 		}
 
 		/* strip leading whitespace */

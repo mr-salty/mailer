@@ -1,5 +1,8 @@
 /*
  * $Log: mailer.c,v $
+ * Revision 1.3  1998/02/17 16:28:52  tjd
+ * added skip_addrs function
+ *
  * Revision 1.2  1996/05/02 22:39:41  tjd
  * removed all dependencies on useful.h
  *
@@ -21,7 +24,7 @@ void do_list(char *fname);
 
 void usage(char *prog)
 {
-	fprintf(stderr,"Usage: %s listfile message_file from@host [path to mpp] \n",prog);
+	fprintf(stderr,"Usage: %s listfile[+line] message_file from@host [path to mpp] \n",prog);
 	exit(1);
 }
 
