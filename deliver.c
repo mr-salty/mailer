@@ -1,6 +1,9 @@
 /*
  * $Log: deliver.c,v $
- * Revision 1.9  1996/01/02 03:37:32  tjd
+ * Revision 1.10  1996/01/02 03:57:42  tjd
+ * call inet_addr if gethostbyname() fails
+ *
+ * Revision 1.9  1996/01/02  03:37:32  tjd
  * added more checks for valid SMTP response- digit digit digit space
  *
  * Revision 1.8  1996/01/02  01:19:33  tjd
@@ -31,6 +34,8 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
 #include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -38,6 +43,7 @@
 #include <unistd.h>
 #include <setjmp.h>
 #include <ctype.h>
+
 
 #include "sendmail.h"
 #include "mailer_config.h"
@@ -86,7 +92,7 @@ void handle_sig(int sig)
 int deliver(char *hostname,userlist users[])
 {
 	struct hostent *host;
-	int nmx,rcode,i,p,deliver_status=0;
+	int nmx,rcode,i,p,deliver_status=0,taddr;
 	
 	char *mxhosts[MAXMXHOSTS+1];
 	in_child=1;
@@ -109,11 +115,18 @@ int deliver(char *hostname,userlist users[])
 
 		if(!(host=gethostbyname(mxhosts[i])))
 		{
+			if((taddr=inet_addr(mxhosts[i]) != -1))
+			{
+				deliver_status=delivermessage((char *)&taddr,hostname,users);
+			}
+			else
+			{
 #ifdef ERROR_MESSAGES
-			sprintf(buf,"gethostbyname(%s)",mxhosts[i]);
-			perror(buf);
+				sprintf(buf,"gethostbyname(%s)",mxhosts[i]);
+				perror(buf);
 #endif
-			deliver_status=-1;
+				deliver_status=-1;
+			}
 		}
 		else
 		{
