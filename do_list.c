@@ -1,6 +1,9 @@
 /* 
  * $Log: do_list.c,v $
- * Revision 1.4  1995/12/28 18:09:01  tjd
+ * Revision 1.5  1996/01/01 22:04:19  tjd
+ * changed memmove() to bcopy() for sun
+ *
+ * Revision 1.4  1995/12/28  18:09:01  tjd
  * fixed placement of wait_timeout, argh.
  *
  * Revision 1.3  1995/12/28 18:06:58  tjd
@@ -244,8 +247,11 @@ void do_list(char *fname)
 				userpos=user-start;
 				
 				do_delivery();
-
+#ifdef sun
+				bcopy(save,buf,savelen+1);
+#else
 				memmove(buf,save,savelen+1);
+#endif
 				strncpy(curhost,buf+hostpos,tmplen);
 				curhost[tmplen]='\0';
 				users[0].addr=buf+userpos;
