@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.7  1996/04/16 04:57:32  tjd
+ * added defines for the scheduler (MAX_CHILD,MIN_CHILD)
+ *
  * Revision 1.6  1996/04/15 16:36:42  tjd
  * added CONNECT_TIMEOUT for tcp connect() timeout
  * since linux's timeout is excruciatingly long...
@@ -23,7 +26,7 @@
 
 /* debug stuff */
 
-#define STATUS	250	/* status every n messages */
+#define STATUS	100	/* status every n messages */
 
 #undef DEBUG		/* general debugging */
 #undef DEBUG_SMTP	/* SMTP replies from host (LOTS of output!!!) */
@@ -49,7 +52,8 @@
 #define MAX_HOSTNAME_LEN 64	/* hostname limit: RFC821 */
 #define ADDRS_PER_BUF   100	/* max # of addresses per buffer: RFC821 */
 #define BUFFER_LEN   	4096	/* single delivery attempt buffer */
-#define MAX_CHILD	30	/* max # of deliver children */
+#define MAX_CHILD	90	/* max # of deliver children */
+#define MIN_CHILD	15	/* min # of deliver children */
 
 /* SMTP: timeouts as defined in RFC1123 */
 #define CONNECT_TIMEOUT		300	/* timeout for tcp connect() */
