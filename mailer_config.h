@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.5  1996/04/14 22:00:54  tjd
+ * changed default MAX_CHILD to 30.
+ *
  * Revision 1.4  1996/03/21 19:28:53  tjd
  * added NULL_RETURN_PATH define
  *
@@ -42,7 +45,7 @@
 #define MAX_HOSTNAME_LEN 64	/* hostname limit: RFC821 */
 #define ADDRS_PER_BUF   100	/* max # of addresses per buffer: RFC821 */
 #define BUFFER_LEN   	4096	/* single delivery attempt buffer */
-#define MAX_CHILD	12	/* max # of deliver children */
+#define MAX_CHILD	30	/* max # of deliver children */
 
 /* SMTP: timeouts as defined in RFC1123 */
 #define SMTP_TIMEOUT_WELCOME	300
