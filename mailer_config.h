@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.16  1997/11/24 21:45:57  tjd
+ * added TWEAK_FROMADDR
+ *
  * Revision 1.15  1997/10/11 07:08:11  tjd
  * added support for mailer config file for debugging, batching, and setting
  * some parameters.
@@ -81,6 +84,10 @@
 
 /* this will embed the current address number in the message-id */
 #define TWEAK_MSGID
+
+/* this will embed the message-id in the from address if batchsize=1 */
+/* TWEAK_MSGID _must_ be defined or this has no effect */
+#define TWEAK_FROMADDR
 
 /* list processing parameters */
 #define MAX_ADDR_LEN    256	/* single address size limit: RFC821 */
