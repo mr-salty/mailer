@@ -1,5 +1,9 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.41  2004/02/09 15:53:40  tjd
+ * add 'u' option to put a url or other per-recipient text at the end of
+ * each message
+ *
  * Revision 1.40  2004/02/08 16:36:40  tjd
  * if OPEN_MAX does not exist, use getrlimit to find the max # of open files
  *
@@ -567,6 +571,11 @@ retryfork:
 			/* make deliver() use our tweaked from address */
 			mailfrom = msg_from;
 #endif
+			if (batch_size != 1)
+			{
+			    /* can't have a URL unless one addr */
+			    FLAG_UNSET(flags,FL_URL_BODY);
+			}
 			exit(deliver(curhost,users,flags));
 
 		default:
@@ -910,6 +919,14 @@ static int read_config_file(char *filename)
 
 		case 'B':
 		    FLAG_UNSET(flags,FL_IDTAG_BODY);
+		    break;
+
+		case 'u':
+		    FLAG_SET(flags,FL_URL_BODY);
+		    break;
+
+		case 'U':
+		    FLAG_UNSET(flags,FL_URL_BODY);
 		    break;
 	    }
 	    ++ptr;

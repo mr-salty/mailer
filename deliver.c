@@ -1,5 +1,9 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.28  2004/02/09 15:53:40  tjd
+ * add 'u' option to put a url or other per-recipient text at the end of
+ * each message
+ *
  * Revision 1.27  2004/02/08 16:43:55  tjd
  * use sigset/longjmp instead of the non-sig versions
  * special case some failure codes, although i don't remember why...
@@ -264,6 +268,33 @@ int deliver(char *hostname,userlist users[], flags_t in_flags)
 jmp_buf jmpbuf; /* for alarm */
 static void handle_alarm(int dummy);
 
+void put_url(char* s, char* addr)
+{
+#if 0
+    /* puts a URL to unsubscribe in the body */
+    static char *hexdigits = "0123456789abcdef";
+    char *p;
+    s += sprintf(s, "\r\nTo unsubscribe: http://wordsmith.org/unsub?");
+    for (p = addr; *p; ++p)
+    {
+	if (isalnum(*p))
+	{
+	    *s++ = *p;
+	}
+	else
+	{
+	    *s++ = '%';
+	    *s++ = hexdigits[(*p >> 4) & 0xf];
+	    *s++ = hexdigits[(*p) & 0xf];
+	}
+    }
+#else
+    /* just puts a message in the body */
+    s += sprintf(s, "\r\nThis message was sent to \"%s\".", addr);
+#endif
+    sprintf(s, "\r\n.\r\n");
+}
+
 /* called by above once we have a host address to try 
  *
  * return value is:
@@ -386,7 +417,9 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 		return -1;
 
 #if defined(USE_IDTAGS) && defined(TWEAK_BODY)
-	if(! FLAG_ISSET(flags,FL_IDTAG_BODY)) {
+	if(FLAG_ISSET(flags,FL_URL_BODY)) {
+	    put_url(g_body_idptr, users[0].addr);
+	} else if(! FLAG_ISSET(flags,FL_IDTAG_BODY)) {
 	    /* get rid of the ID tag in the body */
 	    sprintf(g_body_idptr,".\r\n");
 	}

@@ -1,5 +1,9 @@
 /*
  * $Log: readmessage.c,v $
+ * Revision 1.6  2004/02/09 15:53:40  tjd
+ * add 'u' option to put a url or other per-recipient text at the end of
+ * each message
+ *
  * Revision 1.5  1997/11/24 22:39:54  tjd
  * made the From: header get tweaked by TWEAK_FROMADDR as well
  *
@@ -63,7 +67,8 @@ void readmessage(char *filename,char *mpp)
 	if((messagebody_size=sbuf.st_size)==0) failmpp("size==0");
 
 	/* mmap() here for other architectures! */
-	if(!(messagebody=malloc(messagebody_size+1))) {
+	/* allocate an extra 1k to hold the URL */
+	if(!(messagebody=malloc(messagebody_size+1+1024))) {
 		perror("malloc");
 		failmpp("malloc");
 	}

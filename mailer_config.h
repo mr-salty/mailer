@@ -1,81 +1,17 @@
 /*
- * $Log: mailer_config.h,v $
- * Revision 1.18  1999/09/07 15:39:10  tjd
- * Make the end-wait timeout tuneable and reduce it from 60 to 20 minutes
- *
- * Revision 1.17  1998/04/17 00:37:10  tjd
- * changed config file format
- * added config flags and associated definitions
- * changed tagging; added tagging on SMTP id and in the body
- * changed Message-Id to look like the other tags (no time(NULL))
- * removed NULL_RETURN_PATH (bad feature)
- *
- * Revision 1.16  1997/11/24 21:45:57  tjd
- * added TWEAK_FROMADDR
- *
- * Revision 1.15  1997/10/11 07:08:11  tjd
- * added support for mailer config file for debugging, batching, and setting
- * some parameters.
- * also fixed the computation of the batch_id
- *
- * Revision 1.14  1997/08/14 15:10:13  tjd
- * added TWEAK_MSGID
- *
- * Revision 1.13  1996/05/04 20:51:04  tjd
- * but def for memmove() for sun at the end.
- *
- * Revision 1.12  1996/05/04 18:25:26  tjd
- * made DEBUG_SMTP defined by default.
- *
- * Revision 1.11  1996/05/02 22:52:59  tjd
- * removing dependencies on sendmail header files.
- * sendmail.h is now the only one and only needed by domain.c
- *
- * Revision 1.10  1996/05/02 22:09:55  tjd
- * removed DEBUG, DEBUG_FORK
- *
- * Revision 1.9  1996/04/23 03:56:11  tjd
- * mode ADDS_PER_BUF 64 to cater to msn.com's broken SMTP.
- * (see rfc821, 4.5.3. SIZES)
- *
- * Revision 1.8  1996/04/16 14:58:58  tjd
- * tuned the scheduler; we now have a TARGET_RATE and the scheduler
- * dynamically adapts to try to meet it.
- *
- * Revision 1.7  1996/04/16 04:57:32  tjd
- * added defines for the scheduler (MAX_CHILD,MIN_CHILD)
- *
- * Revision 1.6  1996/04/15 16:36:42  tjd
- * added CONNECT_TIMEOUT for tcp connect() timeout
- * since linux's timeout is excruciatingly long...
- *
- * Revision 1.5  1996/04/14 22:00:54  tjd
- * changed default MAX_CHILD to 30.
- *
- * Revision 1.4  1996/03/21 19:28:53  tjd
- * added NULL_RETURN_PATH define
- *
- * Revision 1.3  1996/02/12 00:36:34  tjd
- * added BOUNCE_FILE define
- *
- * Revision 1.2  1995/12/27 18:06:50  tjd
- * added NO_DELIVERY
- *
- * Revision 1.1  1995/12/14 15:23:30  tjd
- * Initial revision
- *
+ * $Id: mailer_config.h,v 1.19 2004/02/09 15:53:40 tjd Exp $
  */
 
 /* debug stuff */
 
-#define STATUS	100	/* status every n messages */
+#define STATUS	100		/* status every n messages */
 
-#define DEBUG_SMTP	/* SMTP deliver() debugging */
-#undef DEBUG_SMTP_ALL	/* debug ALL SMTP sessions (highly unrecommended!) */
+#define DEBUG_SMTP		/* SMTP deliver() debugging */
+#undef DEBUG_SMTP_ALL		/* debug ALL SMTP sessions (highly unrecommended!) */
 
-#undef NO_FORK		/* useful to debug deliver() */
-#undef NO_DELIVERY	/* fake delivery if defined */
-#undef ERROR_MESSAGES 	/* generate error messages */
+#undef NO_FORK			/* useful to debug deliver() */
+#undef NO_DELIVERY		/* fake delivery if defined */
+#undef ERROR_MESSAGES		/* generate error messages */
 
 /* general params */
 #define HEADER_HEADER	"AWAD"
@@ -88,10 +24,11 @@
 #define CONFIG_FILE	"mailer.config"
 
 /* flags specified in config file */
-typedef short 		flags_t;
+typedef short flags_t;
 
 #define FL_NONE		(0x00)
 #define FL_DEBUG	(0x01)
+#define FL_URL_BODY	(0x02)  /* add 'unsubscribe' url to the body */
 
 /* these require USE_IDTAGS to be defined to have any effect */
 #define FL_IDTAG_MSGID	(0x10)	/* unimplemented (on), see TWEAK_MSGID */
@@ -100,7 +37,7 @@ typedef short 		flags_t;
 #define FL_IDTAG_BODY	(0x80)	/* works if TWEAK_BODY is defined */
 
 /* default flags */
-#define FL_DEFAULT	(FL_IDTAG_MSGID|FL_IDTAG_RECV)
+#define FL_DEFAULT	(FL_IDTAG_MSGID|FL_IDTAG_RECV|FL_URL_BODY)
 
 /* macros for setting/clearing/querying flags */
 #define FLAGS_CLEAR(flags)	(flags = 0)
@@ -125,7 +62,7 @@ typedef short 		flags_t;
 
 /* this will embed the message-id in the body if FL_IDTAG_BODY is set */
 #define TWEAK_BODY
-#endif /* USE_IDTAGS */
+#endif				/* USE_IDTAGS */
 
 /* list processing parameters */
 #define MAX_ADDR_LEN    256	/* single address size limit: RFC821 */
@@ -145,11 +82,11 @@ typedef short 		flags_t;
 #define TARGET_RATE	10000	/* target rate in deliveries per hour */
 
 /* SMTP: timeouts as defined in RFC1123 */
-#define CONNECT_TIMEOUT		300	/* timeout for tcp connect() */
-#define SMTP_TIMEOUT_WELCOME	300
-#define SMTP_TIMEOUT_HELO	300	/* not defined in 1123 */
-#define SMTP_TIMEOUT_MAIL	300
-#define SMTP_TIMEOUT_RCPT	300
+#define CONNECT_TIMEOUT		30	/* timeout for tcp connect() */
+#define SMTP_TIMEOUT_WELCOME	30
+#define SMTP_TIMEOUT_HELO	30	/* not defined in 1123 */
+#define SMTP_TIMEOUT_MAIL	30
+#define SMTP_TIMEOUT_RCPT	30
 #define SMTP_TIMEOUT_DATA	120
 #define SMTP_TIMEOUT_END	600
 

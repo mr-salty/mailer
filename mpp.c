@@ -1,5 +1,9 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.17  2004/02/09 15:53:40  tjd
+ * add 'u' option to put a url or other per-recipient text at the end of
+ * each message
+ *
  * Revision 1.16  1999/09/07 20:15:19  tjd
  * bump version to 1.7
  *
@@ -164,7 +168,7 @@ int main(int argc, char *argv[])
 
 	/* received header */
 	sprintf(p,"Received: from local (localhost)\r\n"
-		  "\tby %s (mailer 1.7) with SMTP", host);
+		  "\tby %s (mailer 1.8) with SMTP", host);
 	p+=strlen(p);
 #if defined(USE_IDTAGS) && defined(TWEAK_RCVHDR)
 	sprintf(p," id <%s>", idtag);
