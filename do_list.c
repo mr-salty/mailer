@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.39  1999/09/07 15:53:05  tjd
+ * change date format in mailer.status to avoid making the line >80 chars
+ *
  * Revision 1.38  1999/09/07 15:39:10  tjd
  * Make the end-wait timeout tuneable and reduce it from 60 to 20 minutes
  *
@@ -634,7 +637,7 @@ static void do_status()
 	static time_t start=0;
 	char timebuf[80];
 	time_t now,diff;
-	int len,h,m,s;
+	int h,m,s;
 
 	if(sf==NULL)
 	{
@@ -647,11 +650,8 @@ static void do_status()
 	now=time(NULL);
 	if(start==0) start=now;
 
-	/* get rid of newline from ctime() */
-
-	strcpy(timebuf,ctime(&now));
-	if((len=strlen(timebuf)))
-		timebuf[len-1]='\0';
+	strftime(timebuf, sizeof(timebuf), "%Y/%m/%d %H:%M:%S",
+	    localtime(&now));
 
 	if(real_numprocessed==0)
 	{
