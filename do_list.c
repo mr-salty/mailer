@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.14  1996/05/02 22:09:55  tjd
+ * removed DEBUG, DEBUG_FORK
+ *
  * Revision 1.13  1996/04/17 14:47:39  tjd
  * more scheduler tning; decreased tolerance band to 5%
  *
@@ -201,9 +204,6 @@ void do_list(char *fname)
 	while(fgets(next,MAX_ADDR_LEN+2,f))	/* newline + null */
 	{
 		++numprocessed;
-#ifdef DEBUG
-		fprintf(stderr,"Address %d: %s",numprocessed,next);
-#endif
 #ifdef STATUS
 		if(!(numprocessed % STATUS))
 		{
@@ -285,10 +285,6 @@ void do_list(char *fname)
 			++tmphost;
 			tmplen=(next-tmphost)-1;
 		}
-
-#ifdef DEBUG
-		fprintf(stderr,"\tuser=%s host=%s\n",user,tmphost);
-#endif
 
 		if(tmplen>MAX_HOSTNAME_LEN)
 		{
@@ -372,9 +368,6 @@ void do_list(char *fname)
 
 static void do_delivery()
 {
-#ifdef DEBUG
-	fprintf(stderr,"do_delivery (%s)\n",curhost);
-#endif
 	while(numchildren >= child_limit)
 	{
 		int old_numch=numchildren;
@@ -442,15 +435,9 @@ static void handle_child()
 {
 	int w,status;
 
-#ifdef DEBUG_FORK
-	fprintf(stderr,"handle_child(): num=%d\n",numchildren);
-#endif
 	while((w=waitpid(-1,&status,WNOHANG)) > 0)
 	{	
 		numchildren--; 
-#ifdef DEBUG_FORK
-		fprintf(stderr,"got a child, num=%d\n",numchildren);
-#endif
 #ifdef STATUS
 		if(WIFEXITED(status))
 			numfailed+=WEXITSTATUS(status);

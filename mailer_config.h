@@ -1,5 +1,8 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.10  1996/05/02 22:09:55  tjd
+ * removed DEBUG, DEBUG_FORK
+ *
  * Revision 1.9  1996/04/23 03:56:11  tjd
  * mode ADDS_PER_BUF 64 to cater to msn.com's broken SMTP.
  * (see rfc821, 4.5.3. SIZES)
@@ -36,8 +39,7 @@
 
 #define STATUS	100	/* status every n messages */
 
-#undef DEBUG		/* general debugging */
-#undef DEBUG_SMTP	/* SMTP replies from host (LOTS of output!!!) */
+#undef DEBUG_SMTP	/* SMTP deliver() debugging */
 #undef NO_FORK		/* useful to debug deliver() */
 #undef NO_DELIVERY	/* fake delivery if defined */
 #undef ERROR_MESSAGES 	/* generate error messages */
