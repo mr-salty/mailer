@@ -1,5 +1,8 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.8  1997/11/24 03:29:53  tjd
+ * bumped version to 1.2a (TWEAK_FROMADDR change)
+ *
  * Revision 1.7  1997/11/24 00:37:32  tjd
  * small tweak to msgid, it now contains the batchsize as the last
  * component.
@@ -99,7 +102,7 @@ int main(int argc, char *argv[])
 	utime=time(NULL);
 	ltime = localtime(&utime);
 	sprintf(p,"Received: from local (localhost)\r\n"
-		  "          by %s (mailer 1.1a) with SMTP;\r\n"
+		  "          by %s (mailer 1.2a) with SMTP;\r\n"
 		  "          %s\r\n",argv[3],longdate);
 	p+=strlen(p);
 	sprintf(p,"Date: %s\r\n",longdate);
