@@ -1,6 +1,9 @@
 /*
  * $Log: readmessage.c,v $
- * Revision 1.1  1995/12/14 15:23:30  tjd
+ * Revision 1.2  1996/01/01 22:40:43  tjd
+ * fixed read() logic for messages > pipe capacity
+ *
+ * Revision 1.1  1995/12/14  15:23:30  tjd
  * Initial revision
  *
  */
@@ -29,7 +32,7 @@ int small_popen_r(char *cmd[]);
 void readmessage(char *filename,char *mpp)
 {
 	char *cmd[4];
-	int fd,dummy;
+	int fd,nread,tread;
 
 	cmd[0]=mpp;
 	cmd[1]=filename;
@@ -54,12 +57,23 @@ void readmessage(char *filename,char *mpp)
 		failmpp("malloc");
 	}
 
-	if(read(fd,messagebody,messagebody_size) != messagebody_size)
+	tread=0;
+
+	while((nread=read(fd,messagebody+tread,messagebody_size-tread)))
 	{
-		failmpp("read (message)");
+		if(nread==-1)
+		{
+			perror("read (pipe)");
+			failmpp("read error (message)");
+		}
+		tread+=nread;
 	}
 
-	if(read(fd,&dummy,1) != 0) failmpp("not at EOF");
+	if(tread != messagebody_size)
+	{
+		failmpp("size mismatch");
+	}
+
 	close(fd);
 	wait(NULL);
 
