@@ -1,5 +1,9 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.18  1996/05/02 22:52:59  tjd
+ * removing dependencies on sendmail header files.
+ * sendmail.h is now the only one and only needed by domain.c
+ *
  * Revision 1.17  1996/05/02 22:04:13  tjd
  * more debug cleanups
  *
@@ -55,24 +59,27 @@
  *
  */
 
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <signal.h>
+#include <setjmp.h>
+#include <time.h>
 #include <sys/types.h>
 #ifndef ultrix
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #endif
-#include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <signal.h>
-#include <unistd.h>
-#include <setjmp.h>
-#include <ctype.h>
 
-#include "sendmail.h"
 #include "mailer_config.h"
 #include "userlist.h"
 
-int getmxrr(char *,char **,bool,int *);
+int getmxrr(char *,char **,char,int *);
 int bounce(userlist users[],bounce_reason fail_all);
 
 #define SMTP_PORT 	25
@@ -147,7 +154,7 @@ int deliver(char *hostname,userlist users[])
 	debug("Hostname: %s\n",hostname);
 
 	start_t=time(NULL);
-	nmx=getmxrr(hostname,mxhosts,FALSE,&rcode);
+	nmx=getmxrr(hostname,mxhosts,0,&rcode);
 	debug("Number of MX records: %d\n",nmx);
 
 	if (nmx<=0)

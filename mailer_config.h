@@ -1,5 +1,9 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.11  1996/05/02 22:52:59  tjd
+ * removing dependencies on sendmail header files.
+ * sendmail.h is now the only one and only needed by domain.c
+ *
  * Revision 1.10  1996/05/02 22:09:55  tjd
  * removed DEBUG, DEBUG_FORK
  *
@@ -66,6 +70,7 @@
 #define ADDRS_PER_BUF   64	/* msn.com won't take 100 though it should! */
 #endif
 #define BUFFER_LEN   	4096	/* single delivery attempt buffer */
+#define MAXMXHOSTS	20	/* max # of MX records */
 
 /* scheduler parameters */
 #define MAX_CHILD	90	/* max # of deliver children */
