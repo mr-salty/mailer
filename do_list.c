@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.11  1996/04/16 04:57:13  tjd
+ * added a scheduler!
+ *
  * Revision 1.10  1996/03/04 15:00:14  tjd
  * bracketed signal warnings with ERROR_MESSAGES
  *
@@ -57,7 +60,7 @@ static char curhost[MAX_HOSTNAME_LEN+1];  /* +1 for null */
 static char buf[BUFFER_LEN+1];		  /* +1 for temp newline (null) */
 static userlist users[ADDRS_PER_BUF+1];	  /* +1 for null marker at end */
 
-static int numchildren=0;
+static int numchildren=0,child_limit=MIN_CHILD;
 
 static void do_delivery();
 static void handle_child();
@@ -102,8 +105,8 @@ static void do_status()
 		m=(diff%3600)/60;
 		s=(diff%60);
 
-		fprintf(sf,"%s: p=%d d=%d f=%d (%2.1f%%) ET %02dh%02dm%02ds (%d/hr)\n",
-		timebuf,numforks,numprocessed,numfailed,
+		fprintf(sf,"%s: p=%d n=%d d=%d f=%d/%2.1f%% t=%02d:%02d:%02d r=%d\n",
+		timebuf,numforks,numchildren,numprocessed,numfailed,
 		((float)numfailed/(float)numprocessed)*100.0,
 		h,m,s,(int)(numprocessed/((float)diff/3600.0)));
 	}
@@ -159,7 +162,7 @@ void do_list(char *fname)
 #endif
 					break;	/* from switch, cont loop */
 			default:
-				if(signal(i,handle_sig)==-1)
+				if((int)signal(i,handle_sig)==-1)
 				{
 					sprintf(buf,"signal(%d)",i);
 					perror(buf);
@@ -361,10 +364,27 @@ static void do_delivery()
 #ifdef DEBUG
 	fprintf(stderr,"do_delivery (%s)\n",curhost);
 #endif
-	while(numchildren >= MAX_CHILD)
+	while(numchildren >= child_limit)
 	{
-		sleep(1);
+		int old_numch=numchildren;
+		sleep(2);
 		handle_child();
+
+		/* this is the "scheduler".
+		 * we want an average of 1 child every 2 seconds, so we
+		 * try to make that happen.
+		 */
+		if(old_numch==numchildren) {
+			child_limit++;
+			if(child_limit > MAX_CHILD) child_limit=MAX_CHILD;
+		}
+		else if(old_numch-1 <= numchildren) {
+			/* do nothing */
+		}
+		else {
+			child_limit--;
+			if(child_limit < MIN_CHILD) child_limit=MIN_CHILD;
+		}
 	}
 
 #ifndef NO_FORK
@@ -396,7 +416,7 @@ retryfork:
 static void handle_child()
 {
 	int w,status;
-	
+
 #ifdef DEBUG_FORK
 	fprintf(stderr,"handle_child(): num=%d\n",numchildren);
 #endif
