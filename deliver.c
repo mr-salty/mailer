@@ -1,5 +1,17 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.24  1999/09/07 20:16:58  tjd
+ * fix handling of continued lines in responses
+ * - atoi() was operating on the whole buffer instead of the ptr where we
+ *   found the response code.
+ *
+ * fix handling of partial read() in responses:
+ * - copy buffer data after the last newline to the start of the buffer and
+ *   append to it when we read.  So i.e. "22" followed by "0 " will parse
+ *   correctly as "220 ".
+ * - make sure while we're doing this that we don't loop due to a line
+ *   being too long for our buffer.
+ *
  * Revision 1.23  1998/04/17 00:37:10  tjd
  * changed config file format
  * added config flags and associated definitions
@@ -393,12 +405,9 @@ static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,int timeou
 
 static int lookfor(int s,int code,int alarmtime)
 {
-	int len;
+	int len, r_len;
 	char *ptr,*t;
 
-	buf[0]='\0';
-
-restart:
 	if(signal(SIGALRM,handle_alarm)==SIG_ERR)
 	{
 		debug("SMTP: signal (alarm): errno %d\n",errno);
@@ -411,9 +420,25 @@ restart:
 		alarm(0);
 		return 0;
 	}
+
+	/* initialize buffer to empty */
+	buf[0]='\0';
+	ptr = buf;
+	len = 0;
+
+restart:
 	alarm(alarmtime);
-	
-	if((len=read(s,buf,TMPBUFLEN-1))<=0)
+
+	/* make sure we don't get stuck in a loop here */
+	r_len = TMPBUFLEN - len - 1;
+	if(r_len <= 0) {
+	   debug("WARNING: read line too long for buffer, truncating.\n");
+	   len = 0;
+	   ptr = buf;
+	   r_len = TMPBUFLEN - 1;
+	}
+
+	if((r_len=read(s, ptr, r_len)) <= 0)
 	{
 		alarm(0);
 		debug("SMTP: read (SMTP connection): errno %d\n",errno);
@@ -421,21 +446,35 @@ restart:
 	}
 	alarm(0);
 
-	ptr=buf;
-	buf[len]='\0';
-	debug("%s",buf);
+	/* update len to reflect the true buffer length, and reset ptr to
+	 * the beginning of buf.
+	 */
+
+	len += r_len;
+	ptr = buf;
+	buf[len] = '\0';
+	debug(" >>> %s", buf);
 
 	while(!isdigit(ptr[0]) || !isdigit(ptr[1]) ||
 	      !isdigit(ptr[2]) || ptr[3] != ' ')
 	{
-		if((t=strchr(ptr,'\n')) == NULL)
+		if((t=strchr(ptr,'\n')) == NULL) {
+			/* if there was anything after the last newline, copy
+			 * it to the start of the buffer and set ptr to point
+			 * at the end.  The read() above will append to this.
+			 */
+			len -= (ptr - buf);
+			if(len > 0) {
+			    memmove(buf, ptr, len);
+			}
+			ptr = buf + len;
 			goto restart;
-		else {
+		} else {
 			ptr=t+1;
 		}
 	}		
 
-	last_status=atoi(buf);
+	last_status=atoi(ptr);
 
 	debug("SMTP: got code %d\n",last_status);
 
