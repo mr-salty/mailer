@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.19  1997/07/05 18:20:54  tjd
+ * fixed misplaced paren when we call inet_addr()
+ *
  * Revision 1.18  1996/05/02 22:52:59  tjd
  * removing dependencies on sendmail header files.
  * sendmail.h is now the only one and only needed by domain.c
@@ -170,7 +173,7 @@ int deliver(char *hostname,userlist users[])
 
 		if(!(host=gethostbyname(mxhosts[i])))
 		{
-			if((taddr=inet_addr(mxhosts[i]) != -1))
+			if((taddr=inet_addr(mxhosts[i])) != -1)
 			{
 				deliver_status=delivermessage((char *)&taddr,hostname,users);
 			}
