@@ -1,5 +1,12 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.11  1998/04/17 00:37:10  tjd
+ * changed config file format
+ * added config flags and associated definitions
+ * changed tagging; added tagging on SMTP id and in the body
+ * changed Message-Id to look like the other tags (no time(NULL))
+ * removed NULL_RETURN_PATH (bad feature)
+ *
  * Revision 1.10  1997/11/24 22:44:01  tjd
  * slight formatting change with Message-Id
  *
@@ -61,6 +68,9 @@ int main(int argc, char *argv[])
 	time_t utime;
 	struct tm *ltime;
 	int hdr,reqhdr;
+#if defined(USE_IDTAGS)
+	char idtag[MAX_ADDR_LEN+40];
+#endif /* USE_IDTAGS */
 
 	if(argc != 4)
 	{
@@ -120,21 +130,37 @@ int main(int argc, char *argv[])
 	longdate=arpadate(NULL);
 	utime=time(NULL);
 	ltime = localtime(&utime);
+
+#if defined(USE_IDTAGS)
+	/* make the ID tags (used in message ID, optionally from and body)
+	 * be careful about changing these (see do_list.c)
+	 */
+
+	sprintf(idtag,"%s.%04d%02d%02d.%c%s", HEADER_HEADER,
+		ltime->tm_year+1900, ltime->tm_mon+1, ltime->tm_mday,
+		'\xff',"00000.000");
+#endif /* USE_IDTAGS */
+
+	/* received header */
 	sprintf(p,"Received: from local (localhost)\r\n"
-		  "\tby %s (mailer 1.3b) with SMTP;\r\n"
-		  "\t%s\r\n",host,longdate);
+		  "\tby %s (mailer 1.4) with SMTP", host);
+	p+=strlen(p);
+#if defined(USE_IDTAGS) && defined(TWEAK_RCVHDR)
+	sprintf(p," id <%s>", idtag);
+	p+=strlen(p);
+#endif
+	sprintf(p,";\r\n\t%s\r\n",longdate);
 	p+=strlen(p);
 	sprintf(p,"Date: %s\r\n",longdate);
 	p+=strlen(p);
-	sprintf(p,"Message-Id: <%s.%d.%04d%02d%02d%s@%s>\r\n",
-			HEADER_HEADER,(int)time(NULL),
-			ltime->tm_year+1900, ltime->tm_mon+1, ltime->tm_mday,
-#ifdef TWEAK_MSGID
-			".\xff""00000.000",
+
+	/* Message-Id: */
+#if defined(USE_IDTAGS) && defined(TWEAK_MSGID)
+	sprintf(p,"Message-Id: <%s@%s>\r\n",idtag,host);
 #else
-			"",
+	sprintf(p,"Message-Id: <%s.%d@%s>\r\n",HEADER_HEADER,
+		(int)time(NULL),host);
 #endif
-			host);
 
 	p+=strlen(p);
 
@@ -206,7 +232,7 @@ int main(int argc, char *argv[])
 				fprintf(stderr,"Warning: discarding extra header: %s",line);			continue;
 			}
 
-#if defined(TWEAK_FROMADDR)
+#if defined(USE_IDTAGS) && defined(TWEAK_FROMADDR)
 			if(newhdr == H_FROM) {
 			    char *aptr;
 			    aptr=index(line,'<');
@@ -218,11 +244,7 @@ int main(int argc, char *argv[])
 			    /* be careful that this looks like the message-id
 			     * above!
 			     */
-			    sprintf(aptr," <%s+%04d%02d%02d%s@%s>\r\n", user,
-				ltime->tm_year+1900, ltime->tm_mon+1,
-				ltime->tm_mday,
-				".\xff""00000.000", host);
-
+			    sprintf(aptr," <%s+%s@%s>\r\n", user, idtag, host);
 			}
 #endif
 
@@ -234,7 +256,16 @@ int main(int argc, char *argv[])
 		p+=strlen(p);
 	}
 
-	/* EOM sentinel */
+#if defined(USE_IDTAGS) && defined(TWEAK_BODY)
+	/* add this at the end of the message.  We'll strip it out later (in
+	 * deliver() if we don't want it.
+	 */
+
+	sprintf(p,"(%s)\r\n",idtag);
+	p+=strlen(p);
+#endif
+
+	/* EOM sentinel.  Don't change this without looking at deliver.c */
 	sprintf(p-2,"\r\n.\r\n");
 	p+=strlen(p);
 

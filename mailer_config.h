@@ -1,5 +1,12 @@
 /*
  * $Log: mailer_config.h,v $
+ * Revision 1.17  1998/04/17 00:37:10  tjd
+ * changed config file format
+ * added config flags and associated definitions
+ * changed tagging; added tagging on SMTP id and in the body
+ * changed Message-Id to look like the other tags (no time(NULL))
+ * removed NULL_RETURN_PATH (bad feature)
+ *
  * Revision 1.16  1997/11/24 21:45:57  tjd
  * added TWEAK_FROMADDR
  *
@@ -77,17 +84,45 @@
 /* configuration file name */
 #define CONFIG_FILE	"mailer.config"
 
-/* do we want bounce mail from remote SMTPs to be discarded at the source?
- * defining this will send MAIL FROM:<>.  Probably not a good idea.
- */
-#undef NULL_RETURN_PATH
+/* flags specified in config file */
+typedef short 		flags_t;
 
+#define FL_NONE		(0x00)
+#define FL_DEBUG	(0x01)
+
+/* these require USE_IDTAGS to be defined to have any effect */
+#define FL_IDTAG_MSGID	(0x10)	/* unimplemented (on), see TWEAK_MSGID */
+#define FL_IDTAG_RECV	(0x20)	/* unimplemented (on), see TWEAK_RCVHDR */
+#define FL_IDTAG_FROM	(0x40)	/* unimplemented, see TWEAK_FROMADDR */
+#define FL_IDTAG_BODY	(0x80)	/* works if TWEAK_BODY is defined */
+
+/* default flags */
+#define FL_DEFAULT	(FL_IDTAG_MSGID|FL_IDTAG_RECV)
+
+/* macros for setting/clearing/querying flags */
+#define FLAGS_CLEAR(flags)	(flags = 0)
+#define FLAG_SET(flags,flag)	(flags |= flag)
+#define FLAG_UNSET(flags,flag)	(flags &= ~flag)
+#define FLAG_ISSET(flags,flag)	(flags & flag)
+
+#define BATCH_DEFAULT	(-1)
+
+/* use ID tags? */
+#define USE_IDTAGS
+
+#ifdef USE_IDTAGS
 /* this will embed the current address number in the message-id */
 #define TWEAK_MSGID
 
-/* this will embed the message-id in the from address if batchsize=1 */
-/* TWEAK_MSGID _must_ be defined or this has no effect */
-#define TWEAK_FROMADDR
+/* this will embed the id tag in the Received: header SMTP id */
+#define TWEAK_RCVHDR
+
+/* this will embed the message-id in the from address if batchsize==1 */
+/* #define TWEAK_FROMADDR */
+
+/* this will embed the message-id in the body if FL_IDTAG_BODY is set */
+#define TWEAK_BODY
+#endif /* USE_IDTAGS */
 
 /* list processing parameters */
 #define MAX_ADDR_LEN    256	/* single address size limit: RFC821 */

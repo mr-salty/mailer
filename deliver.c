@@ -1,5 +1,12 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.23  1998/04/17 00:37:10  tjd
+ * changed config file format
+ * added config flags and associated definitions
+ * changed tagging; added tagging on SMTP id and in the body
+ * changed Message-Id to look like the other tags (no time(NULL))
+ * removed NULL_RETURN_PATH (bad feature)
+ *
  * Revision 1.22  1998/02/17 18:04:04  tjd
  * improved signal handling for INT/TERM/HUP, parent will wait for children
  * to exit and try to kill them if they don't
@@ -105,6 +112,9 @@ static int last_status;		/* status of last lookfor() */
 extern char *messagebody,*myhostname,*mailfrom;
 extern int messagebody_size;
 
+#if defined(USE_IDTAGS) && defined(TWEAK_BODY)
+extern char *g_body_idptr;
+#endif /* USE_IDTAGS */
 
 static int delivermessage(char *addr,char *hostname, userlist users[]);
 static int lookfor(int s,int code,int alarmtime);
@@ -113,10 +123,10 @@ static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,int timeou
 static int in_child=0;
 extern void signal_backend(int sig);
 static userlist *gl_users=NULL;
+static flags_t flags;
 
 #ifdef DEBUG_SMTP
 static char *hostname2;	/* filled in by deliver() */
-static int debug_flag;
 #endif
 
 #include <stdarg.h>
@@ -133,7 +143,7 @@ void debug(char *format,...) {
     }
 
     if (fpLog == NULL) {
-	if(!debug_flag) {
+	if(!FLAG_ISSET(flags,FL_DEBUG)) {
 	    go_away = 1;
 	    return;
 	}
@@ -168,7 +178,7 @@ void handle_sig(int sig)
 
 /* finds all the mx records and tries to deliver the message */
 
-int deliver(char *hostname,userlist users[],int do_debug)
+int deliver(char *hostname,userlist users[], flags_t in_flags)
 {
 	struct hostent *host;
 	int nmx,rcode,i,p,deliver_status=0,taddr;
@@ -177,9 +187,10 @@ int deliver(char *hostname,userlist users[],int do_debug)
 	char *mxhosts[MAXMXHOSTS+1];
 	in_child=1;
 	gl_users=users;
+
+	flags = in_flags;
 #ifdef DEBUG_SMTP
 	hostname2=hostname;
-	debug_flag = do_debug;
 #endif
 	debug("Hostname: %s\n",hostname);
 
@@ -292,11 +303,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 
 	if(smtp_write(s,1,"HELO %s\r\n",myhostname,250,SMTP_TIMEOUT_HELO))
 		return -1;
-#ifdef NULL_RETURN_PATH
-	if(smtp_write(s,1,"MAIL FROM:<>\r\n",NULL,250,SMTP_TIMEOUT_MAIL))
-#else
 	if(smtp_write(s,1,"MAIL FROM:<%s>\r\n",mailfrom,250,SMTP_TIMEOUT_MAIL))
-#endif /* NULL_RETURN_PATH */
 		return -1;
 
 	rcpt_fail=0;
@@ -322,6 +329,13 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 
 	if(smtp_write(s,1,"%s","DATA\r\n",354,SMTP_TIMEOUT_DATA))
 		return -1;
+
+#if defined(USE_IDTAGS) && defined(TWEAK_BODY)
+	if(! FLAG_ISSET(flags,FL_IDTAG_BODY)) {
+	    /* get rid of the ID tag in the body */
+	    sprintf(g_body_idptr,".\r\n");
+	}
+#endif
 
 	if(smtp_write(s,1,messagebody,NULL,250,SMTP_TIMEOUT_END))
 		return -1;

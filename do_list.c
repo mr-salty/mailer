@@ -1,5 +1,12 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.35  1998/04/17 00:37:10  tjd
+ * changed config file format
+ * added config flags and associated definitions
+ * changed tagging; added tagging on SMTP id and in the body
+ * changed Message-Id to look like the other tags (no time(NULL))
+ * removed NULL_RETURN_PATH (bad feature)
+ *
  * Revision 1.34  1998/03/03 17:59:06  tjd
  * if fork() fails, sleep for a bit before retrying.
  *
@@ -142,34 +149,51 @@ static int real_numprocessed=0,skip_addrs = 0;
 static int list_line = 0, batch_id = 0, batch_size = 0;
 static int max_child,min_child,target_rate;
 
-int deliver(char *hostname,userlist users[],int do_debug);
+int deliver(char *hostname,userlist users[],flags_t in_flags);
 void bounce_user(char *addr,bounce_reason why,int statcode);
 void handle_sig(int sig),signal_backend(int sig);
 static int parse_address(FILE *f, char **abuf, char **start, char **host);
-static void do_delivery(int debug_flag),do_status(),setup_signals(),schedule();
+static void do_delivery(flags_t flags),do_status(),setup_signals(),schedule();
 static int handle_child();
 static int read_config_file(char *filename);
-static int get_config_entry(char *host, int *debug_flag);
+static int get_config_entry(char *host, flags_t *flags);
+
+#if defined(USE_IDTAGS)
+
+extern char *messagebody;
 
 #if defined(TWEAK_MSGID)
-extern char *messagebody;
 static char *idptr;
+#endif /* TWEAK_MSGID */
+
+#if defined(TWEAK_RCVHDR)
+static char *r_idptr;
+#endif /* TWEAK_RCVHDR */
 
 #if defined(TWEAK_FROMADDR)
 extern char *mailfrom;
 static char *f_idptr, *f_addrptr;
 static int f_addrlen;
-#endif
-#endif
+#endif	/* TWEAK_FROMADDR */
+
+#if defined(TWEAK_BODY)
+static char *b_idptr;
+char *g_body_idptr;	/* used in deliver() */
+#endif /* TWEAK_BODY */
+
+#endif	/* USE_IDTAGS */
 
 void do_list(char *fname)
 {
 	FILE *f;
+#if defined(USE_IDTAGS)
+	char *last_idptr;
+#endif
 
 	int inbuf,hostlen,curhostlen,wait_timeout,fd,next_status=STATUS;
 	char *next,*addr,*host;
 	int addrs_per_buf = ADDRS_PER_BUF;
-	int debug_flag = 0;
+	flags_t flags = FL_DEFAULT;
 	char *pskip;
 
 	/* check for a +number_of_lines_to_skip in the filename */
@@ -200,17 +224,37 @@ void do_list(char *fname)
 	do_status();
 	setup_signals();
 
+#if defined(USE_IDTAGS)
+	last_idptr=messagebody;
+	/* mpp puts '\xff'00000.000 where we need to insert id tags */
+
+#if defined(TWEAK_RCVHDR)
+	r_idptr=index(last_idptr, '\xff');
+	last_idptr=r_idptr+1;
+#endif /* TWEAK_RCVHDR */
+
 #if defined(TWEAK_MSGID)
-	/* mpp puts this here for us.  '\xff'00000.000 */
-	idptr=index(messagebody,'\xff');
+	idptr=index(last_idptr,'\xff');
+	last_idptr=idptr+1;
+#endif /* TWEAK_MSGID */
+
 #if defined(TWEAK_FROMADDR)
-	f_idptr=index(idptr+1, '\xff');
+	f_idptr=index(last_idptr, '\xff');
+	last_idptr=f_idptr+1;
 	
 	/* find the start and length of the whole address */
 	for(f_addrptr=(f_idptr) ; *(f_addrptr-1) != '<'; --f_addrptr) {} 
 	f_addrlen=index(f_addrptr,'>') - f_addrptr;
-#endif
-#endif
+#endif	/* TWEAK_FROMADDR */
+
+#if defined(TWEAK_BODY)
+	b_idptr=index(last_idptr, '\xff');
+	last_idptr=b_idptr+1;
+
+	/* find the start of the last line */
+	for(g_body_idptr=b_idptr;*(g_body_idptr-1) != '\n'; --g_body_idptr) {}
+#endif /* TWEAK_BODY */
+#endif	/* USE_IDTAGS */
 
 	/* main loop.
 	 * next holds next empty buffer position
@@ -239,7 +283,7 @@ void do_list(char *fname)
 		        /* deliver what we have */
 			users[inbuf].addr=NULL;
 			batch_size=inbuf;
-			do_delivery(debug_flag);
+			do_delivery(flags);
 
 			/* copy current entry to the start of the buffer
 			 * and update the pointers.
@@ -255,7 +299,7 @@ void do_list(char *fname)
 		    strncpy(curhost,host,hostlen);
 		    curhostlen = hostlen;
 		    curhost[curhostlen]='\0';
-		    addrs_per_buf=get_config_entry(curhost, &debug_flag);
+		    addrs_per_buf=get_config_entry(curhost, &flags);
 		}
 
 		if(inbuf == 0) {
@@ -270,7 +314,7 @@ void do_list(char *fname)
 		{
 			users[inbuf].addr=NULL;
 			batch_size=inbuf;
-			do_delivery(debug_flag);
+			do_delivery(flags);
 			inbuf=0;
 			next=buf;
 		}
@@ -284,7 +328,7 @@ void do_list(char *fname)
 	{
 		users[inbuf].addr=NULL;
 		batch_size=inbuf;
-		do_delivery(debug_flag);
+		do_delivery(flags);
 	}
 
 	do_status();
@@ -430,27 +474,38 @@ static int parse_address(FILE *f, char **abuf, char **start, char **host)
 /* forks and calls deliver() to deliver the messages.
  */
 
-static void do_delivery(int debug_flag)
+static void do_delivery(flags_t flags)
 {
 	int i;
+	char idtag[11];
 
-#if defined(TWEAK_MSGID)
-	char buf[11];
+#if defined(USE_IDTAGS)
 #if defined(TWEAK_FROMADDR)
 	char msg_from[MAX_ADDR_LEN+1];
-#endif
+#endif /* TWEAK_FROMADDR */
 
 	if(batch_id > 999999) batch_id=999999;	/* should never happen */
 	if(batch_size > 999) batch_size=999;	/* should never happen */
-	sprintf(buf,"%06d.%03d", batch_id, batch_size);
-	memcpy(idptr, buf, 10);
+	sprintf(idtag,"%06d.%03d", batch_id, batch_size);
+
+#if defined(TWEAK_MSGID)
+	memcpy(idptr, idtag, 10);
+#endif	/* TWEAK_MSGID */
+
+#if defined(TWEAK_RCVHDR)
+	memcpy(r_idptr, idtag, 10);
+#endif	/* TWEAK_RCVHDR */
 
 #if defined(TWEAK_FROMADDR)
-	memcpy(f_idptr,buf,10);
+	memcpy(f_idptr, idtag, 10);
 	strncpy(msg_from, f_addrptr, f_addrlen);
 	msg_from[f_addrlen]='\0';
-#endif
-#endif
+#endif	/* TWEAK_FROMADDR */
+
+#if defined(TWEAK_BODY)
+	memcpy(b_idptr, idtag, 10);
+#endif /* TWEAK_BODY */
+#endif /* USE_IDTAGS */
 
 #ifndef NO_FORK
 	schedule();	/* blocks until we can start another */
@@ -466,11 +521,11 @@ retryfork:
 			goto retryfork;
 		case 0:
 			for(i=0;i<OPEN_MAX;++i) close(i);
-#if defined(TWEAK_FROMADDR) && defined(TWEAK_MSGID)
+#if defined(USE_IDTAGS) && defined(TWEAK_FROMADDR)
 			/* make deliver() use our tweaked from address */
 			mailfrom = msg_from;
 #endif
-			exit(deliver(curhost,users,debug_flag));
+			exit(deliver(curhost,users,flags));
 
 		default:
 			numforks++;
@@ -677,8 +732,8 @@ static void setup_signals()
 
 typedef struct _config_entry {
     char *host;
-    int debug:1;
-    int batch:31;
+    flags_t flags;
+    short batch;
     struct _config_entry *next;
 } config_entry;
 
@@ -700,7 +755,8 @@ static int read_config_file(char *filename)
     char buf[CONFIG_BUFLEN];
     config_entry *new_entry;
     char *ptr,*hostp,*batchp;
-    int debug, batch;
+    flags_t flags;
+    int batch;
     
     /* set defaults for scheduler parameters */
     max_child = MAX_CHILD;
@@ -750,20 +806,18 @@ static int read_config_file(char *filename)
 	++ptr;
 
 
-	/* find batch size or debug flag.
-	 * setting batch to -1 means use the default (see get_config_entry)
+	/* find batch size or flags.
+	 * setting batch to BATCH_DEFAULT means use the default
 	 */
 	 
 	while(isspace(*ptr) && *ptr) { ++ptr; }
 
-	if(tolower(*ptr) == 'y') {
-	    batch = -1;
-	    debug = 1;
-	} else if(tolower(*ptr) == 'n') {
-	    batch = -1;
-	    debug = 0;
-	} else {
+	/* see if the batchsize exists */
+	batch=BATCH_DEFAULT;
+
+	if(isdigit(*ptr) || *ptr == '-') {
 	    batchp=ptr;
+
 	    while(!isspace(*ptr) && *ptr) { ++ptr; }
 	    if(*ptr) {
 	        *ptr='\0';
@@ -771,15 +825,55 @@ static int read_config_file(char *filename)
 	    }
 
 	    batch=atoi(batchp);
-	    if(batch <= 0) { batch = -1; }
+	    if(batch <= 0) { batch = BATCH_DEFAULT; }
+	}
 
-	    /* try to find debug flag */
-	    while(isspace(*ptr) && *ptr) { ++ptr; }
-	    if(tolower(*ptr) == 'y') {
-	        debug = 1;
-	    } else {
-		debug = 0;
+	/* now look for flags */
+	flags=FL_DEFAULT;
+
+	while(*ptr) {
+	    switch(*ptr) {
+		case 'd':
+		    FLAG_SET(flags,FL_DEBUG);
+		    break;
+
+		case 'D':
+		    FLAG_UNSET(flags,FL_DEBUG);
+		    break;
+
+		case 'i':
+		    FLAG_SET(flags,FL_IDTAG_MSGID);
+		    break;
+
+		case 'I':
+		    FLAG_UNSET(flags,FL_IDTAG_MSGID);
+		    break;
+
+		case 'r':
+		    FLAG_SET(flags,FL_IDTAG_RECV);
+		    break;
+
+		case 'R':
+		    FLAG_UNSET(flags,FL_IDTAG_RECV);
+		    break;
+
+		case 'f':
+		    FLAG_SET(flags,FL_IDTAG_FROM);
+		    break;
+
+		case 'F':
+		    FLAG_UNSET(flags,FL_IDTAG_FROM);
+		    break;
+
+		case 'b':
+		    FLAG_SET(flags,FL_IDTAG_BODY);
+		    break;
+
+		case 'B':
+		    FLAG_UNSET(flags,FL_IDTAG_BODY);
+		    break;
 	    }
+	    ++ptr;
 	}
 	
 	/* special cases (parameters) */
@@ -802,9 +896,8 @@ static int read_config_file(char *filename)
 		continue;
 	    }
 	    strcpy(new_entry->host, hostp);
-	    new_entry->debug = debug;
-	    new_entry->batch = batch;
-
+	    new_entry->flags = flags;
+	    new_entry->batch = (short) batch;
 	    new_entry->next = head;
 	    head = new_entry;
 	}
@@ -821,7 +914,7 @@ static int read_config_file(char *filename)
  * looks up the host in the config file info
  */
 
-static int get_config_entry(char *host, int *debug_flag)
+static int get_config_entry(char *host, flags_t *flags)
 {
     config_entry *e;
     int batch;
@@ -848,11 +941,11 @@ static int get_config_entry(char *host, int *debug_flag)
     }
     if(e==NULL) {
 	/* didn't find an entry */
-	batch = -1;
-	*debug_flag = 0;
+	batch = BATCH_DEFAULT;
+	*flags = FL_DEFAULT;
     } else {
 	batch = e->batch;
-	*debug_flag = (e->debug != 0);
+	*flags = e->flags;
     }
 
     if(batch <= 0 || batch > ADDRS_PER_BUF) {
@@ -860,11 +953,11 @@ static int get_config_entry(char *host, int *debug_flag)
     }
 
     #if defined(DEBUG_SMTP_ALL)
-    *debug_flag = 1;
+    FLAG_SET(*flags,F_DEBUG);
     #endif
     #if !defined(DEBUG_SMTP)
-    *debug_flag = 0;
+    FLAG_UNSET(*flags,F_DEBUG);
     #endif
-    
+
     return batch;
 }
