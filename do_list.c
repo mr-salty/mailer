@@ -1,5 +1,9 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.32  1998/02/17 18:04:04  tjd
+ * improved signal handling for INT/TERM/HUP, parent will wait for children
+ * to exit and try to kill them if they don't
+ *
  * Revision 1.31  1998/02/17 16:28:52  tjd
  * added skip_addrs function
  *
@@ -133,7 +137,7 @@ static int max_child,min_child,target_rate;
 
 int deliver(char *hostname,userlist users[],int do_debug);
 void bounce_user(char *addr,bounce_reason why,int statcode);
-void handle_sig(int sig),signal_backend();
+void handle_sig(int sig),signal_backend(int sig);
 static int parse_address(FILE *f, char **abuf, char **start, char **host);
 static void do_delivery(int debug_flag),do_status(),setup_signals(),schedule();
 static int handle_child();
@@ -584,8 +588,40 @@ static void do_status()
 	fflush(sf);
 }
 
-void signal_backend()
+void signal_backend(int sig)
 {
+	if(sig == SIGINT || sig == SIGTERM || sig == SIGHUP) {
+	    /* user requested this, so wait for children to terminate */
+	    int wait_timeout=0;
+
+	    fprintf(stderr,"Waiting 30 seconds for children to exit...\n");
+	    while(numchildren && ++wait_timeout < 6) /* wait 30 seconds */
+	    {
+		sleep(5);
+		handle_child();
+	    }
+
+	    if(numchildren) {
+	    	fprintf(stderr,"Sending signal %d to all children...\n", sig);
+		signal(sig,SIG_IGN);
+		kill(0, sig);
+		sleep(5);
+		handle_child();
+
+		if(numchildren) {
+		    do_status();
+	    	    fprintf(stderr,"Giving up! sending SIGKILL!\n");
+		    kill(0, SIGKILL);
+		    sleep(5);
+		    handle_child();
+		    fprintf(stderr,"Strange, I'm still here!\n");
+		    if(numchildren) {
+			fprintf(stderr,"%d children did not exit.\n",
+				numchildren);
+		    }
+		}
+	    }
+	}
 	do_status();
 	exit(1);
 }

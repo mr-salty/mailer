@@ -1,5 +1,9 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.22  1998/02/17 18:04:04  tjd
+ * improved signal handling for INT/TERM/HUP, parent will wait for children
+ * to exit and try to kill them if they don't
+ *
  * Revision 1.21  1997/10/11 07:08:11  tjd
  * added support for mailer config file for debugging, batching, and setting
  * some parameters.
@@ -107,7 +111,7 @@ static int lookfor(int s,int code,int alarmtime);
 static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,int timeout);
 
 static int in_child=0;
-extern void signal_backend();
+extern void signal_backend(int sig);
 static userlist *gl_users=NULL;
 
 #ifdef DEBUG_SMTP
@@ -157,7 +161,7 @@ void handle_sig(int sig)
 	else
 	{
 		fprintf(stderr,"FATAL: parent mailer caught signal %d, exiting.\n",sig);
-		signal_backend();
+		signal_backend(sig);
 		exit(1);
 	}
 }
