@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.10  1996/03/04 15:00:14  tjd
+ * bracketed signal warnings with ERROR_MESSAGES
+ *
  * Revision 1.9  1996/02/12 00:49:37  tjd
  * added some #includes to support open().
  *
@@ -407,8 +410,10 @@ static void handle_child()
 		if(WIFEXITED(status))
 			numfailed+=WEXITSTATUS(status);
 #endif
+#ifdef ERROR_MESSAGES
 		if(WIFSIGNALED(status))
 			fprintf(stderr,"Warning: child exited on signal %d\n",WTERMSIG(status));
+#endif
 	}
 #ifdef ERROR_MESSAGES
 	if(w==-1 && errno != ECHILD) perror("waitpid");

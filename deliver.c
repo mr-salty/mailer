@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.13  1996/03/04 15:00:14  tjd
+ * bracketed signal warnings with ERROR_MESSAGES
+ *
  * Revision 1.12  1996/01/02 06:14:39  tjd
  * fix for braindead ultrix headers
  *
@@ -84,7 +87,9 @@ void handle_sig(int sig)
 {
 	if(in_child)
 	{
+#ifdef ERROR_MESSAGES
 		fprintf(stderr,"Warning: pid %d caught signal %d, failing.\n",getpid(),sig);
+#endif
 		exit(bounce(gl_users,(caught_signal<<16) | sig));
 	}
 	else
