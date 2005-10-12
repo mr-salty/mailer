@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.29  2005/10/12 15:40:58  tjd
+ * fix some leaking sockets during error recovery
+ *
  * Revision 1.28  2004/02/09 15:53:40  tjd
  * add 'u' option to put a url or other per-recipient text at the end of
  * each message
@@ -325,6 +328,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	if(signal(SIGALRM,handle_alarm)==SIG_ERR)
 	{
 		debug("SMTP: signal (connect alarm): errno %d\n",errno);
+		close(s);
 		return -1;
 	}
 
@@ -332,6 +336,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	{
 		debug("SMTP: Timed out during connect()\n");
 		alarm(0);
+		close(s);
 		return -1;
 	}
 	alarm(CONNECT_TIMEOUT);
