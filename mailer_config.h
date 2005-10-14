@@ -1,5 +1,5 @@
 /*
- * $Id: mailer_config.h,v 1.19 2004/02/09 15:53:40 tjd Exp $
+ * $Id: mailer_config.h,v 1.20 2005/10/14 16:35:59 tjd Exp $
  */
 
 /* debug stuff */
@@ -92,6 +92,15 @@ typedef short flags_t;
 
 /* how long (in sec) to wait for children to finish at the end of processing */
 #define END_WAIT_TIMEOUT	(20 * 60)
+
+/* this limits the overall length of the transaction, i.e. for problems we've
+ * seen with yahoo and hotmail where they have many MXs and they all time
+ * out.  it is only checked prior to attempting delivery, so it may actually
+ * take longer than this if we're waiting on one of the other timeouts.
+ * the default value should allow us to try 3 addresses where connect()
+ * times out (30s) before giving up.
+ */
+#define TRANSACTION_TIMEOUT 75
 
 #ifdef sun
 #define memmove(D,S,L)	bcopy(S,D,L)

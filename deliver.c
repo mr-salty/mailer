@@ -1,5 +1,9 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.30  2005/10/14 16:35:59  tjd
+ * add a new per-session timeout of 75s, in case we have many MXs that are
+ * all taking 30s to timeout.
+ *
  * Revision 1.29  2005/10/12 15:40:58  tjd
  * fix some leaking sockets during error recovery
  *
@@ -239,7 +243,15 @@ int deliver(char *hostname,userlist users[], flags_t in_flags)
 		{
 			if((taddr=inet_addr(mxhosts[i])) != -1)
 			{
-				deliver_status=delivermessage((char *)&taddr,hostname,users);
+				if (time(NULL) - start_t >= TRANSACTION_TIMEOUT)
+				{
+					debug("SMTP: Transaction timeout.\n");
+					deliver_status = -1;
+				}
+				else
+				{
+					deliver_status=delivermessage((char *)&taddr,hostname,users);
+				}
 			}
 			else
 			{
@@ -251,6 +263,13 @@ int deliver(char *hostname,userlist users[], flags_t in_flags)
 		{
 			for(p=0;host->h_addr_list[p];++p)
 			{
+				if (time(NULL) - start_t >= TRANSACTION_TIMEOUT)
+				{
+					debug("SMTP: Transaction timeout.\n");
+					deliver_status = -1;
+					break;
+				}
+					
 				if((deliver_status=delivermessage(host->h_addr_list[p],hostname,users)) != -1)
 					break;
 			}
