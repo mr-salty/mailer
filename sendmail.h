@@ -35,8 +35,8 @@
  */
 
 /*
-**  SENDMAIL.H -- Global definitions for sendmail.
-*/
+ **  SENDMAIL.H -- Global definitions for sendmail.
+ */
 
 # ifdef _DEFINE
 # define EXTERN
@@ -60,8 +60,8 @@ static char SmailSccsId[] =	"@(#)sendmail.h	8.43.1.3		3/5/95";
 
 
 /*
-**  CONF.H -- All user-configurable parameters for sendmail
-*/
+ **  CONF.H -- All user-configurable parameters for sendmail
+ */
 
 # include <sys/param.h>
 # include <sys/types.h>
@@ -72,9 +72,9 @@ static char SmailSccsId[] =	"@(#)sendmail.h	8.43.1.3		3/5/95";
 # include <signal.h>
 
 /**********************************************************************
-**  Table sizes, etc....
-**	There shouldn't be much need to change these....
-**********************************************************************/
+ **  Table sizes, etc....
+ **	There shouldn't be much need to change these....
+ **********************************************************************/
 
 # define MAXLINE	2048		/* max line length */
 # define MAXNAME	256		/* max length of a name */
@@ -95,10 +95,10 @@ static char SmailSccsId[] =	"@(#)sendmail.h	8.43.1.3		3/5/95";
 # endif
 
 /**********************************************************************
-**  Compilation options.
-**
-**	#define these if they are available; comment them out otherwise.
-**********************************************************************/
+ **  Compilation options.
+ **
+ **	#define these if they are available; comment them out otherwise.
+ **********************************************************************/
 
 # define LOG		1	/* enable logging */
 # define UGLYUUCP	1	/* output ugly UUCP From lines */
@@ -112,52 +112,52 @@ static char SmailSccsId[] =	"@(#)sendmail.h	8.43.1.3		3/5/95";
 # endif
 
 /**********************************************************************
-**  0/1 Compilation options.
-**	#define these to 1 if they are available;
-**	#define them to 0 otherwise.
-**********************************************************************/
+ **  0/1 Compilation options.
+ **	#define these to 1 if they are available;
+ **	#define them to 0 otherwise.
+ **********************************************************************/
 
 # ifndef NAMED_BIND
 #  define NAMED_BIND	1	/* use Berkeley Internet Domain Server */
 # endif
 
 /*
-**  Most systems have symbolic links today, so default them on.  You
-**  can turn them off by #undef'ing this below.
-*/
+ **  Most systems have symbolic links today, so default them on.  You
+ **  can turn them off by #undef'ing this below.
+ */
 
 # define HASLSTAT	1	/* has lstat(2) call */
 
 /*
-**  General "standard C" defines.
-**
-**	These may be undone later, to cope with systems that claim to
-**	be Standard C but aren't.  Gcc is the biggest offender -- it
-**	doesn't realize that the library is part of the language.
-**
-**	Life would be much easier if we could get rid of this sort
-**	of bozo problems.
-*/
+ **  General "standard C" defines.
+ **
+ **	These may be undone later, to cope with systems that claim to
+ **	be Standard C but aren't.  Gcc is the biggest offender -- it
+ **	doesn't realize that the library is part of the language.
+ **
+ **	Life would be much easier if we could get rid of this sort
+ **	of bozo problems.
+ */
 
 #ifdef __STDC__
 # define HASSETVBUF	1	/* we have setvbuf(3) in libc */
 #endif
 
 /**********************************************************************
-**  Operating system configuration.
-**
-**	Unless you are porting to a new OS, you shouldn't have to
-**	change these.
-**********************************************************************/
+ **  Operating system configuration.
+ **
+ **	Unless you are porting to a new OS, you shouldn't have to
+ **	change these.
+ **********************************************************************/
 
 /*
-**  Per-Operating System defines
-*/
+ **  Per-Operating System defines
+ */
 
 
 /*
-**  HP-UX -- tested for 8.07, 9.00, and 9.01.
-*/
+ **  HP-UX -- tested for 8.07, 9.00, and 9.01.
+ */
 
 # ifdef __hpux
 /* avoid m_flags conflict between db.h & sys/sysmacros.h on HP 300 */
@@ -187,8 +187,8 @@ extern int	syslog(int, char *, ...);
 
 
 /*
-**  IBM AIX 3.x -- actually tested for 3.2.3
-*/
+ **  IBM AIX 3.x -- actually tested for 3.2.3
+ */
 
 # ifdef _AIX3
 # define HASINITGROUPS	1	/* has initgroups(3) call */
@@ -201,10 +201,10 @@ extern int	syslog(int, char *, ...);
 
 
 /*
-**  Silicon Graphics IRIX
-**
-**	Compiles on 4.0.1.
-*/
+ **  Silicon Graphics IRIX
+ **
+ **	Compiles on 4.0.1.
+ */
 
 # ifdef IRIX
 # define SYSTEM5	1	/* this is a System-V derived system */
@@ -221,11 +221,11 @@ extern int	syslog(int, char *, ...);
 
 
 /*
-**  SunOS and Solaris
-**
-**	Tested on SunOS 4.1.x (a.k.a. Solaris 1.1.x) and
-**	Solaris 2.2 (a.k.a. SunOS 5.2).
-*/
+ **  SunOS and Solaris
+ **
+ **	Tested on SunOS 4.1.x (a.k.a. Solaris 1.1.x) and
+ **	Solaris 2.2 (a.k.a. SunOS 5.2).
+ */
 
 #if defined(sun) && !defined(BSD)
 
@@ -239,7 +239,7 @@ extern int	syslog(int, char *, ...);
 # endif
 
 # ifdef SOLARIS
-			/* Solaris 2.x (a.k.a. SunOS 5.x) */
+/* Solaris 2.x (a.k.a. SunOS 5.x) */
 #  ifndef __svr4__
 #   define __svr4__		/* use all System V Releae 4 defines below */
 #  endif
@@ -261,7 +261,7 @@ extern int	syslog(int, char *, ...);
 #  endif
 
 # else
-			/* SunOS 4.0.3 or 4.1.x */
+/* SunOS 4.0.3 or 4.1.x */
 #  define HASSETREUID	1	/* has setreuid(2) call */
 #  ifndef HASFLOCK
 #   define HASFLOCK	1	/* has flock(2) call */
@@ -270,7 +270,7 @@ extern int	syslog(int, char *, ...);
 #  include <vfork.h>
 
 #  ifdef SUNOS403
-			/* special tweaking for SunOS 4.0.3 */
+/* special tweaking for SunOS 4.0.3 */
 #   include <malloc.h>
 #   define SYS5SIGNALS	1	/* SysV signal semantics -- reset on each sig */
 #   define WAITUNION	1	/* use "union wait" as wait argument type */
@@ -282,7 +282,7 @@ typedef int		pid_t;
 extern char		*getenv();
 
 #  else
-			/* 4.1.x specifics */
+/* 4.1.x specifics */
 #   define HASSETSID	1	/* has Posix setsid(2) call */
 #   define HASSETVBUF	1	/* we have setvbuf(3) in libc */
 
@@ -291,10 +291,10 @@ extern char		*getenv();
 #endif
 
 /*
-**  DG/UX
-**
-**	Tested on 5.4.2
-*/
+ **  DG/UX
+ **
+ **	Tested on 5.4.2
+ */
 
 #ifdef	DGUX
 # define SYSTEM5	1
@@ -320,12 +320,12 @@ extern long	dgux_inet_addr();
 
 
 /*
-**  Digital Ultrix 4.2A or 4.3
-**
-**	Apparently, fcntl locking is broken on 4.2A, in that locks are
-**	not dropped when the process exits.  This causes major problems,
-**	so flock is the only alternative.
-*/
+ **  Digital Ultrix 4.2A or 4.3
+ **
+ **	Apparently, fcntl locking is broken on 4.2A, in that locks are
+ **	not dropped when the process exits.  This causes major problems,
+ **	so flock is the only alternative.
+ */
 
 #ifdef ultrix
 # define HASSETREUID	1	/* has setreuid(2) call */
@@ -351,8 +351,8 @@ extern long	dgux_inet_addr();
 
 
 /*
-**  OSF/1 (tested on Alpha)
-*/
+ **  OSF/1 (tested on Alpha)
+ */
 
 #ifdef __osf__
 # define HASUNSETENV	1	/* has unsetenv(3) call */
@@ -370,8 +370,8 @@ extern long	dgux_inet_addr();
 
 
 /*
-**  NeXTstep
-*/
+ **  NeXTstep
+ */
 
 #ifdef NeXT
 # define HASINITGROUPS	1	/* has initgroups(3) call */
@@ -401,10 +401,10 @@ typedef int		pid_t;
 
 
 /*
-**  4.4 BSD
-**
-**	See also BSD defines.
-*/
+ **  4.4 BSD
+ **
+ **	See also BSD defines.
+ */
 
 #ifdef BSD4_4
 # define HASUNSETENV	1	/* has unsetenv(3) call */
@@ -418,9 +418,9 @@ typedef int		pid_t;
 
 
 /*
-**  BSD/386 (all versions)
-**	From Tony Sanders, BSDI
-*/
+ **  BSD/386 (all versions)
+ **	From Tony Sanders, BSDI
+ */
 
 #ifdef __bsdi__
 # define HASUNSETENV	1	/* has the unsetenv(3) call */
@@ -432,11 +432,11 @@ typedef int		pid_t;
 #  define LA_TYPE	LA_SUBR
 # endif
 # if defined(_BSDI_VERSION) && _BSDI_VERSION >= 199312
-			/* version 1.1 or later */
+/* version 1.1 or later */
 #  define HASSETPROCTITLE 1	/* setproctitle is in libc */
 #  undef SETPROCTITLE		/* so don't redefine it in conf.c */
 # else
-			/* version 1.0 or earlier */
+/* version 1.0 or earlier */
 #  ifndef OLD_NEWDB
 #   define OLD_NEWDB	1	/* old version of newdb library */
 #  endif
@@ -446,12 +446,12 @@ typedef int		pid_t;
 
 
 /*
-**  386BSD / FreeBSD 1.0E / NetBSD (all architectures, all versions)
-**
-**  4.3BSD clone, closer to 4.4BSD
-**
-**	See also BSD defines.
-*/
+ **  386BSD / FreeBSD 1.0E / NetBSD (all architectures, all versions)
+ **
+ **  4.3BSD clone, closer to 4.4BSD
+ **
+ **	See also BSD defines.
+ */
 
 #if defined(__386BSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
 # define HASUNSETENV	1	/* has unsetenv(3) call */
@@ -469,10 +469,10 @@ typedef int		pid_t;
 
 
 /*
-**  Mach386
-**
-**	For mt Xinu's Mach386 system.
-*/
+ **  Mach386
+ **
+ **	For mt Xinu's Mach386 system.
+ */
 
 #if defined(MACH) && defined(i386)
 # define MACH386	1
@@ -501,13 +501,13 @@ typedef int		pid_t;
 
 
 /*
-**  4.3 BSD -- this is for very old systems
-**
-**	Should work for mt Xinu MORE/BSD and Mips UMIPS-BSD 2.1.
-**
-**	You'll also have to install a new resolver library.
-**	I don't guarantee that support for this environment is complete.
-*/
+ **  4.3 BSD -- this is for very old systems
+ **
+ **	Should work for mt Xinu MORE/BSD and Mips UMIPS-BSD 2.1.
+ **
+ **	You'll also have to install a new resolver library.
+ **	I don't guarantee that support for this environment is complete.
+ */
 
 #if defined(oldBSD43) || defined(MORE_BSD) || defined(umipsbsd)
 # define NEEDVPRINTF	1	/* need a replacement for vprintf(3) */
@@ -531,12 +531,12 @@ extern int		errno;
 
 
 /*
-**  SCO Unix
-**
-**	This includes two parts -- the first is for SCO Open Server 3.2v4
-**	(contributed by Philippe Brand <phb@colombo.telesys-innov.fr>).
-**	The second is, I believe, for an older version.
-*/
+ **  SCO Unix
+ **
+ **	This includes two parts -- the first is for SCO Open Server 3.2v4
+ **	(contributed by Philippe Brand <phb@colombo.telesys-innov.fr>).
+ **	The second is, I believe, for an older version.
+ */
 
 #ifdef _SCO_unix_4_2
 # define _SCO_unix_
@@ -564,11 +564,11 @@ extern int		errno;
 
 
 /*
-**  ConvexOS 11.0 and later
-**
-**	"Todd C. Miller" <millert@mroe.cs.colorado.edu> claims this
-**	works on 9.1 as well.
-*/
+ **  ConvexOS 11.0 and later
+ **
+ **	"Todd C. Miller" <millert@mroe.cs.colorado.edu> claims this
+ **	works on 9.1 as well.
+ */
 
 #ifdef _CONVEX_SOURCE
 # define BSD		1	/* include all the BSD defines */
@@ -595,10 +595,10 @@ extern int		errno;
 
 
 /*
-**  RISC/os 4.52
-**
-**	Gives a ton of warning messages, but otherwise compiles.
-*/
+ **  RISC/os 4.52
+ **
+ **	Gives a ton of warning messages, but otherwise compiles.
+ */
 
 #ifdef RISCOS
 
@@ -626,19 +626,19 @@ extern void		*malloc();
 
 
 /*
-**  Linux 0.99pl10 and above...
-**
-**  Thanks to, in reverse order of contact:
-**
-**	John Kennedy <warlock@csuchico.edu>
-**	Florian La Roche <rzsfl@rz.uni-sb.de>
-**	Karl London <karl@borg.demon.co.uk>
-**
-**  Last compiled against:	[03/02/94 @ 05:34 PM (Wednesday)]
-**	sendmail 8.6.6.b9	named 4.9.2-931205-p1	db-1.73
-**	gcc 2.5.8		libc.so.4.5.19
-**	slackware 1.1.2		linux 0.99.15
-*/
+ **  Linux 0.99pl10 and above...
+ **
+ **  Thanks to, in reverse order of contact:
+ **
+ **	John Kennedy <warlock@csuchico.edu>
+ **	Florian La Roche <rzsfl@rz.uni-sb.de>
+ **	Karl London <karl@borg.demon.co.uk>
+ **
+ **  Last compiled against:	[03/02/94 @ 05:34 PM (Wednesday)]
+ **	sendmail 8.6.6.b9	named 4.9.2-931205-p1	db-1.73
+ **	gcc 2.5.8		libc.so.4.5.19
+ **	slackware 1.1.2		linux 0.99.15
+ */
 
 #ifdef __linux__
 # define BSD		1	/* include BSD defines */
@@ -657,26 +657,26 @@ extern void		*malloc();
 
 
 /*
-**  DELL SVR4 Issue 2.2, and others
-**	From Kimmo Suominen <kim@grendel.lut.fi>
-**
-**	It's on #ifdef DELL_SVR4 because Solaris also gets __svr4__
-**	defined, and the definitions conflict.
-**
-**	Peter Wemm <peter@perth.DIALix.oz.au> claims that the setreuid
-**	trick works on DELL 2.2 (SVR4.0/386 version 4.0) and ESIX 4.0.3A
-**	(SVR4.0/386 version 3.0).
-*/
+ **  DELL SVR4 Issue 2.2, and others
+ **	From Kimmo Suominen <kim@grendel.lut.fi>
+ **
+ **	It's on #ifdef DELL_SVR4 because Solaris also gets __svr4__
+ **	defined, and the definitions conflict.
+ **
+ **	Peter Wemm <peter@perth.DIALix.oz.au> claims that the setreuid
+ **	trick works on DELL 2.2 (SVR4.0/386 version 4.0) and ESIX 4.0.3A
+ **	(SVR4.0/386 version 3.0).
+ */
 
 #ifdef DELL_SVR4
-				/* no changes necessary */
-				/* see general __svr4__ defines below */
+/* no changes necessary */
+/* see general __svr4__ defines below */
 #endif
 
 
 /*
-**  Apple A/UX 3.0
-*/
+ **  Apple A/UX 3.0
+ */
 
 #ifdef _AUX_SOURCE
 # include <sys/sysmacros.h>
@@ -701,10 +701,10 @@ extern void		*malloc();
 
 
 /*
-**  Encore UMAX V
-**
-**	Not extensively tested.
-*/
+ **  Encore UMAX V
+ **
+ **	Not extensively tested.
+ */
 
 #ifdef UMAXV
 # include <limits.h>
@@ -725,14 +725,14 @@ extern struct group	*getgrent(), *getgrnam(), *getgrgid();
 
 
 /*
-**  Stardent Titan 3000 running TitanOS 4.2.
-**
-**	Must be compiled in "cc -43" mode.
-**
-**	From Kate Hedstrom <kate@ahab.rutgers.edu>.
-**
-**	Note the tweaking below after the BSD defines are set.
-*/
+ **  Stardent Titan 3000 running TitanOS 4.2.
+ **
+ **	Must be compiled in "cc -43" mode.
+ **
+ **	From Kate Hedstrom <kate@ahab.rutgers.edu>.
+ **
+ **	Note the tweaking below after the BSD defines are set.
+ */
 
 #ifdef titan
 # define setpgid	setpgrp
@@ -743,10 +743,10 @@ typedef int		pid_t;
 
 
 /*
-**  Sequent DYNIX 3.2.0
-**
-**	From Jim Davis <jdavis@cs.arizona.edu>.
-*/
+ **  Sequent DYNIX 3.2.0
+ **
+ **	From Jim Davis <jdavis@cs.arizona.edu>.
+ */
 
 #ifdef sequent
 
@@ -784,12 +784,12 @@ typedef int		pid_t;
 
 
 /*
-**  Sequent DYNIX/ptx v2.0 (and higher)
-**
-**	For DYNIX/ptx v1.x, undefine HASSETREUID.
-**
-**	From Tim Wright <timw@sequent.com>.
-*/
+ **  Sequent DYNIX/ptx v2.0 (and higher)
+ **
+ **	For DYNIX/ptx v1.x, undefine HASSETREUID.
+ **
+ **	From Tim Wright <timw@sequent.com>.
+ */
 
 #ifdef _SEQUENT_
 # define SYSTEM5	1	/* include all the System V defines */
@@ -814,10 +814,10 @@ typedef int		pid_t;
 
 
 /*
-**  Cray Unicos
-**
-**	Ported by David L. Kensiski, Sterling Sofware <kensiski@nas.nasa.gov>
-*/
+ **  Cray Unicos
+ **
+ **	Ported by David L. Kensiski, Sterling Sofware <kensiski@nas.nasa.gov>
+ */
 
 #ifdef UNICOS
 # define SYSTEM5	1	/* include all the System V defines */
@@ -829,13 +829,13 @@ typedef int		pid_t;
 
 
 /*
-**  Apollo DomainOS
-**
-**  From Todd Martin <tmartint@tus.ssi1.com> & Don Lewis <gdonl@gv.ssi1.com>
-**
-**  15 Jan 1994
-**
-*/
+ **  Apollo DomainOS
+ **
+ **  From Todd Martin <tmartint@tus.ssi1.com> & Don Lewis <gdonl@gv.ssi1.com>
+ **
+ **  15 Jan 1994
+ **
+ */
 
 #ifdef apollo
 # define HASSETREUID	1	/* has setreuid(2) call */
@@ -859,10 +859,10 @@ typedef int		pid_t;
 
 
 /*
-**  UnixWare
-**
-**	From Evan Champion <evanc@spatial.synapse.org>.
-*/
+ **  UnixWare
+ **
+ **	From Evan Champion <evanc@spatial.synapse.org>.
+ */
 
 #ifdef UNIXWARE
 # define SYSTEM5		1
@@ -887,10 +887,10 @@ typedef int		pid_t;
 
 
 /*
-**  Intergraph CLIX 3.1
-**
-**	From Paul Southworth <pauls@locust.cic.net>
-*/
+ **  Intergraph CLIX 3.1
+ **
+ **	From Paul Southworth <pauls@locust.cic.net>
+ */
 
 #ifdef CLIX
 # define SYSTEM5	1	/* looks like System V */
@@ -906,28 +906,28 @@ typedef int		pid_t;
 
 
 /*
-**  NCR 3000 Series (SysVr4)
-**
-**	From From: Kevin Darcy <kevin@tech.mis.cfc.com>.
-*/
+ **  NCR 3000 Series (SysVr4)
+ **
+ **	From From: Kevin Darcy <kevin@tech.mis.cfc.com>.
+ */
 
 #ifdef NCR3000
 # define __svr4__
 # undef BSD
 # define LA_AVENRUN	"avenrun"
 #endif
- 
 
 
 
 
-/**********************************************************************
-**  End of Per-Operating System defines
-**********************************************************************/
 
 /**********************************************************************
-**  More general defines
-**********************************************************************/
+ **  End of Per-Operating System defines
+ **********************************************************************/
+
+/**********************************************************************
+ **  More general defines
+ **********************************************************************/
 
 /* general BSD defines */
 #ifdef BSD
@@ -986,19 +986,19 @@ typedef int		pid_t;
 #endif
 
 /*
-**  If no type for argument two of getgroups call is defined, assume
-**  it's an integer -- unfortunately, there seem to be several choices
-**  here.
-*/
+ **  If no type for argument two of getgroups call is defined, assume
+ **  it's an integer -- unfortunately, there seem to be several choices
+ **  here.
+ */
 
 #ifndef GIDSET_T
 # define GIDSET_T	int
 #endif
 
 /*
-**  Tweaking for systems that (for example) claim to be BSD but
-**  don't have all the standard BSD routines (boo hiss).
-*/
+ **  Tweaking for systems that (for example) claim to be BSD but
+ **  don't have all the standard BSD routines (boo hiss).
+ */
 
 #ifdef titan
 # undef HASINITGROUPS		/* doesn't have initgroups(3) call */
@@ -1006,15 +1006,15 @@ typedef int		pid_t;
 
 
 /*
-**  Due to a "feature" in some operating systems such as Ultrix 4.3 and
-**  HPUX 8.0, if you receive a "No route to host" message (ICMP message
-**  ICMP_UNREACH_HOST) on _any_ connection, all connections to that host
-**  are closed.  Some firewalls return this error if you try to connect
-**  to the IDENT port (113), so you can't receive email from these hosts
-**  on these systems.  The firewall really should use a more specific
-**  message such as ICMP_UNREACH_PROTOCOL or _PORT or _NET_PROHIB.  If
-**  not explicitly set to zero above, default it on.
-*/
+ **  Due to a "feature" in some operating systems such as Ultrix 4.3 and
+ **  HPUX 8.0, if you receive a "No route to host" message (ICMP message
+ **  ICMP_UNREACH_HOST) on _any_ connection, all connections to that host
+ **  are closed.  Some firewalls return this error if you try to connect
+ **  to the IDENT port (113), so you can't receive email from these hosts
+ **  on these systems.  The firewall really should use a more specific
+ **  message such as ICMP_UNREACH_PROTOCOL or _PORT or _NET_PROHIB.  If
+ **  not explicitly set to zero above, default it on.
+ */
 
 #ifndef IDENTPROTO
 # define IDENTPROTO	1	/* use IDENT proto (RFC 1413) */
@@ -1034,10 +1034,10 @@ typedef int		pid_t;
 
 
 /**********************************************************************
-**  Remaining definitions should never have to be changed.  They are
-**  primarily to provide back compatibility for older systems -- for
-**  example, it includes some POSIX compatibility definitions
-**********************************************************************/
+ **  Remaining definitions should never have to be changed.  They are
+ **  primarily to provide back compatibility for older systems -- for
+ **  example, it includes some POSIX compatibility definitions
+ **********************************************************************/
 
 /* System 5 compatibility */
 #ifndef S_ISREG
@@ -1054,9 +1054,9 @@ typedef int		pid_t;
 #endif
 
 /*
-**  Older systems don't have this error code -- it should be in
-**  /usr/include/sysexits.h.
-*/
+ **  Older systems don't have this error code -- it should be in
+ **  /usr/include/sysexits.h.
+ */
 
 # ifndef EX_CONFIG
 # define EX_CONFIG	78	/* configuration error */
@@ -1067,10 +1067,10 @@ typedef int		pid_t;
 
 
 /*
-**  These are used in a few cases where we need some special
-**  error codes, but where the system doesn't provide something
-**  reasonable.  They are printed in errstring.
-*/
+ **  These are used in a few cases where we need some special
+ **  error codes, but where the system doesn't provide something
+ **  reasonable.  They are printed in errstring.
+ */
 
 #ifndef E_PSEUDOBASE
 # define E_PSEUDOBASE	256
@@ -1155,7 +1155,7 @@ typedef int		pid_t;
  * in the distribution version of 2.5.5).
  */
 #if !defined(__GNUC__) || __GNUC__ < 2 || \
-	(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
+(__GNUC__ == 2 && __GNUC_MINOR__ < 5)
 #define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define	__dead		__volatile
@@ -1173,8 +1173,8 @@ typedef int		pid_t;
 #endif
 
 /*
-**  Do some required dependencies
-*/
+ **  Do some required dependencies
+ */
 
 #if defined(NETINET) || defined(NETISO)
 # define SMTP		1	/* enable user and server SMTP */
@@ -1184,8 +1184,8 @@ typedef int		pid_t;
 
 
 /*
-**  Arrange to use either varargs or stdargs
-*/
+ **  Arrange to use either varargs or stdargs
+ */
 
 # ifdef __STDC__
 
@@ -1214,7 +1214,7 @@ typedef int		pid_t;
 # define NODE_LENGTH 32
 struct utsname
 {
-	char nodename[NODE_LENGTH+1];
+    char nodename[NODE_LENGTH+1];
 };
 #endif /* HASUNAME */
 
@@ -1266,10 +1266,10 @@ typedef void		(*sigfunc_t) __P((int));
 #endif
 
 /*
-**  Size of tobuf (deliver.c)
-**	Tweak this to match your syslog implementation.  It will have to
-**	allow for the extra information printed.
-*/
+ **  Size of tobuf (deliver.c)
+ **	Tweak this to match your syslog implementation.  It will have to
+ **	allow for the extra information printed.
+ */
 
 #ifndef TOBUFSIZE
 # if (SYSLOG_BUFSIZE) > 512
@@ -1280,10 +1280,10 @@ typedef void		(*sigfunc_t) __P((int));
 #endif
 
 /*
-**  Size of prescan buffer.
-**	Despite comments in the _sendmail_ book, this probably should
-**	not be changed; there are some hard-to-define dependencies.
-*/
+ **  Size of prescan buffer.
+ **	Despite comments in the _sendmail_ book, this probably should
+ **	not be changed; there are some hard-to-define dependencies.
+ */
 
 # define PSBUFSIZE	(MAXNAME + MAXATOM)	/* size of prescan buffer */
 /* fork routine -- set above using #ifdef _osname_ or in Makefile */
@@ -1292,8 +1292,8 @@ typedef void		(*sigfunc_t) __P((int));
 # endif
 
 /*
-**  If we are going to link scanf anyway, use it in readcf
-*/
+ **  If we are going to link scanf anyway, use it in readcf
+ */
 
 #if !defined(HASUNAME) && !defined(SCANF)
 # define SCANF		1
@@ -1321,11 +1321,11 @@ typedef char	bool;
 /* assertions */
 # ifndef NASSERT
 # define ASSERT(expr, msg, parm)\
-	if (!(expr))\
-	{\
-		fprintf(stderr, "assertion botch: %s:%d: ", __FILE__, __LINE__);\
-		fprintf(stderr, msg, parm);\
-	}
+    if (!(expr))\
+{\
+    fprintf(stderr, "assertion botch: %s:%d: ", __FILE__, __LINE__);\
+    fprintf(stderr, msg, parm);\
+}
 # else /* NASSERT */
 # define ASSERT(expr, msg, parm)
 # endif /* NASSERT */
@@ -1368,11 +1368,11 @@ typedef char	bool;
 
 
 /*
-**  Data structure for bit maps.
-**
-**	Each bit in this map can be referenced by an ascii character.
-**	This is 128 possible bits, or 12 8-bit bytes.
-*/
+ **  Data structure for bit maps.
+ **
+ **	Each bit in this map can be referenced by an ascii character.
+ **	This is 128 possible bits, or 12 8-bit bytes.
+ */
 
 #define BITMAPBYTES	16	/* number of bytes in a bit map */
 #define BYTEBITS	8	/* number of bits in a byte */
@@ -1395,27 +1395,27 @@ typedef int	BITMAP[BITMAPBYTES / sizeof (int)];
 /* clear an entire bit map */
 #define clrbitmap(map)		bzero((char *) map, BITMAPBYTES)
 /*
-**  Address structure.
-**	Addresses are stored internally in this structure.
-*/
+   **  Address structure.
+   **	Addresses are stored internally in this structure.
+   */
 
 struct address
 {
-	char		*q_paddr;	/* the printname for the address */
-	char		*q_user;	/* user name */
-	char		*q_ruser;	/* real user name, or NULL if q_user */
-	char		*q_host;	/* host name */
-	struct mailer	*q_mailer;	/* mailer to use */
-	u_short		q_flags;	/* status flags, see below */
-	uid_t		q_uid;		/* user-id of receiver (if known) */
-	gid_t		q_gid;		/* group-id of receiver (if known) */
-	char		*q_home;	/* home dir (local mailer only) */
-	char		*q_fullname;	/* full name if known */
-	struct address	*q_next;	/* chain */
-	struct address	*q_alias;	/* address this results from */
-	char		*q_owner;	/* owner of q_alias */
-	struct address	*q_tchain;	/* temporary use chain */
-	time_t		q_timeout;	/* timeout for this address */
+    char		*q_paddr;	/* the printname for the address */
+    char		*q_user;	/* user name */
+    char		*q_ruser;	/* real user name, or NULL if q_user */
+    char		*q_host;	/* host name */
+    struct mailer	*q_mailer;	/* mailer to use */
+    u_short		q_flags;	/* status flags, see below */
+    uid_t		q_uid;		/* user-id of receiver (if known) */
+    gid_t		q_gid;		/* group-id of receiver (if known) */
+    char		*q_home;	/* home dir (local mailer only) */
+    char		*q_fullname;	/* full name if known */
+    struct address	*q_next;	/* chain */
+    struct address	*q_alias;	/* address this results from */
+    char		*q_owner;	/* owner of q_alias */
+    struct address	*q_tchain;	/* temporary use chain */
+    time_t		q_timeout;	/* timeout for this address */
 };
 
 typedef struct address ADDRESS;
@@ -1435,32 +1435,32 @@ typedef struct address ADDRESS;
 
 # define NULLADDR	((ADDRESS *) NULL)
 /*
-**  Mailer definition structure.
-**	Every mailer known to the system is declared in this
-**	structure.  It defines the pathname of the mailer, some
-**	flags associated with it, and the argument vector to
-**	pass to it.  The flags are defined in conf.c
-**
-**	The argument vector is expanded before actual use.  All
-**	words except the first are passed through the macro
-**	processor.
-*/
+   **  Mailer definition structure.
+   **	Every mailer known to the system is declared in this
+   **	structure.  It defines the pathname of the mailer, some
+   **	flags associated with it, and the argument vector to
+   **	pass to it.  The flags are defined in conf.c
+   **
+   **	The argument vector is expanded before actual use.  All
+   **	words except the first are passed through the macro
+   **	processor.
+   */
 
 struct mailer
 {
-	char	*m_name;	/* symbolic name of this mailer */
-	char	*m_mailer;	/* pathname of the mailer to use */
-	BITMAP	m_flags;	/* status flags, see below */
-	short	m_mno;		/* mailer number internally */
-	char	**m_argv;	/* template argument vector */
-	short	m_sh_rwset;	/* rewrite set: sender header addresses */
-	short	m_se_rwset;	/* rewrite set: sender envelope addresses */
-	short	m_rh_rwset;	/* rewrite set: recipient header addresses */
-	short	m_re_rwset;	/* rewrite set: recipient envelope addresses */
-	char	*m_eol;		/* end of line string */
-	long	m_maxsize;	/* size limit on message to this mailer */
-	int	m_linelimit;	/* max # characters per line */
-	char	*m_execdir;	/* directory to chdir to before execv */
+    char	*m_name;	/* symbolic name of this mailer */
+    char	*m_mailer;	/* pathname of the mailer to use */
+    BITMAP	m_flags;	/* status flags, see below */
+    short	m_mno;		/* mailer number internally */
+    char	**m_argv;	/* template argument vector */
+    short	m_sh_rwset;	/* rewrite set: sender header addresses */
+    short	m_se_rwset;	/* rewrite set: sender envelope addresses */
+    short	m_rh_rwset;	/* rewrite set: recipient header addresses */
+    short	m_re_rwset;	/* rewrite set: recipient envelope addresses */
+    char	*m_eol;		/* end of line string */
+    long	m_maxsize;	/* size limit on message to this mailer */
+    int	m_linelimit;	/* max # characters per line */
+    char	*m_execdir;	/* directory to chdir to before execv */
 };
 
 typedef struct mailer	MAILER;
@@ -1470,11 +1470,11 @@ typedef struct mailer	MAILER;
 # define M_BLANKEND	'b'	/* ensure blank line at end of message */
 # define M_NOCOMMENT	'c'	/* don't include comment part of address */
 # define M_CANONICAL	'C'	/* make addresses canonical "u@dom" */
-		/*	'D'	CF: include Date: */
+/*	'D'	CF: include Date: */
 # define M_EXPENSIVE	'e'	/* it costs to use this mailer.... */
 # define M_ESCFROM	'E'	/* escape From lines to >From */
 # define M_FOPT		'f'	/* mailer takes picky -f flag */
-		/*	'F'	CF: include From: or Resent-From: */
+/*	'F'	CF: include From: or Resent-From: */
 # define M_NO_NULL_FROM	'g'	/* sender of errors should be $g */
 # define M_HST_UPPER	'h'	/* preserve host case distinction */
 # define M_PREHEAD	'H'	/* MAIL11V3: preview headers */
@@ -1482,19 +1482,19 @@ typedef struct mailer	MAILER;
 # define M_LOCALMAILER	'l'	/* delivery is to this host */
 # define M_LIMITS	'L'	/* must enforce SMTP line limits */
 # define M_MUSER	'm'	/* can handle multiple users at once */
-		/*	'M'	CF: include Message-Id: */
+/*	'M'	CF: include Message-Id: */
 # define M_NHDR		'n'	/* don't insert From line */
 # define M_MANYSTATUS	'N'	/* MAIL11V3: DATA returns multi-status */
 # define M_FROMPATH	'p'	/* use reverse-path in MAIL FROM: */
-		/*	'P'	CF: include Return-Path: */
+/*	'P'	CF: include Return-Path: */
 # define M_ROPT		'r'	/* mailer takes picky -r flag */
 # define M_SECURE_PORT	'R'	/* try to send on a reserved TCP port */
 # define M_STRIPQ	's'	/* strip quote chars from user/host */
 # define M_RESTR	'S'	/* must be daemon to execute */
 # define M_USR_UPPER	'u'	/* preserve user case distinction */
 # define M_UGLYUUCP	'U'	/* this wants an ugly UUCP from line */
-		/*	'V'	UIUC: !-relativize all addresses */
-		/*	'x'	CF: include Full-Name: */
+/*	'V'	UIUC: !-relativize all addresses */
+/*	'x'	CF: include Full-Name: */
 # define M_XDOT		'X'	/* use hidden-dot algorithm */
 # define M_7BITS	'7'	/* use 7-bit path */
 
@@ -1505,31 +1505,31 @@ EXTERN MAILER	*ProgMailer;		/* ptr to program mailer */
 EXTERN MAILER	*FileMailer;		/* ptr to *file* mailer */
 EXTERN MAILER	*InclMailer;		/* ptr to *include* mailer */
 /*
-**  Header structure.
-**	This structure is used internally to store header items.
-*/
+   **  Header structure.
+   **	This structure is used internally to store header items.
+   */
 
 struct header
 {
-	char		*h_field;	/* the name of the field */
-	char		*h_value;	/* the value of that field */
-	struct header	*h_link;	/* the next header */
-	u_short		h_flags;	/* status bits, see below */
-	BITMAP		h_mflags;	/* m_flags bits needed */
+    char		*h_field;	/* the name of the field */
+    char		*h_value;	/* the value of that field */
+    struct header	*h_link;	/* the next header */
+    u_short		h_flags;	/* status bits, see below */
+    BITMAP		h_mflags;	/* m_flags bits needed */
 };
 
 typedef struct header	HDR;
 
 /*
-**  Header information structure.
-**	Defined in conf.c, this struct declares the header fields
-**	that have some magic meaning.
-*/
+ **  Header information structure.
+ **	Defined in conf.c, this struct declares the header fields
+ **	that have some magic meaning.
+ */
 
 struct hdrinfo
 {
-	char	*hi_field;	/* the name of the field */
-	u_short	hi_flags;	/* status bits, see below */
+    char	*hi_field;	/* the name of the field */
+    u_short	hi_flags;	/* status bits, see below */
 };
 
 extern struct hdrinfo	HdrInfo[];
@@ -1548,27 +1548,27 @@ extern struct hdrinfo	HdrInfo[];
 # define H_RECEIPTTO	02000	/* this field has return receipt info */
 # define H_ERRORSTO	04000	/* this field has error address info */
 /*
-**  Information about currently open connections to mailers, or to
-**  hosts that we have looked up recently.
-*/
+   **  Information about currently open connections to mailers, or to
+   **  hosts that we have looked up recently.
+   */
 
 # define MCI		struct mailer_con_info
 
 MCI
 {
-	short		mci_flags;	/* flag bits, see below */
-	short		mci_errno;	/* error number on last connection */
-	short		mci_herrno;	/* h_errno from last DNS lookup */
-	short		mci_exitstat;	/* exit status from last connection */
-	short		mci_state;	/* SMTP state */
-	long		mci_maxsize;	/* max size this server will accept */
-	FILE		*mci_in;	/* input side of connection */
-	FILE		*mci_out;	/* output side of connection */
-	int		mci_pid;	/* process id of subordinate proc */
-	char		*mci_phase;	/* SMTP phase string */
-	struct mailer	*mci_mailer;	/* ptr to the mailer for this conn */
-	char		*mci_host;	/* host name */
-	time_t		mci_lastuse;	/* last usage time */
+    short		mci_flags;	/* flag bits, see below */
+    short		mci_errno;	/* error number on last connection */
+    short		mci_herrno;	/* h_errno from last DNS lookup */
+    short		mci_exitstat;	/* exit status from last connection */
+    short		mci_state;	/* SMTP state */
+    long		mci_maxsize;	/* max size this server will accept */
+    FILE		*mci_in;	/* input side of connection */
+    FILE		*mci_out;	/* output side of connection */
+    int		mci_pid;	/* process id of subordinate proc */
+    char		*mci_phase;	/* SMTP phase string */
+    struct mailer	*mci_mailer;	/* ptr to the mailer for this conn */
+    char		*mci_host;	/* host name */
+    time_t		mci_lastuse;	/* last usage time */
 };
 
 
@@ -1592,53 +1592,53 @@ MCI
 #define MCIS_SSD	5		/* service shutting down */
 #define MCIS_ERROR	6		/* I/O error on connection */
 /*
-**  Envelope structure.
-**	This structure defines the message itself.  There is usually
-**	only one of these -- for the message that we originally read
-**	and which is our primary interest -- but other envelopes can
-**	be generated during processing.  For example, error messages
-**	will have their own envelope.
-*/
+   **  Envelope structure.
+   **	This structure defines the message itself.  There is usually
+   **	only one of these -- for the message that we originally read
+   **	and which is our primary interest -- but other envelopes can
+   **	be generated during processing.  For example, error messages
+   **	will have their own envelope.
+   */
 
 # define ENVELOPE	struct envelope
 
 ENVELOPE
 {
-	HDR		*e_header;	/* head of header list */
-	long		e_msgpriority;	/* adjusted priority of this message */
-	time_t		e_ctime;	/* time message appeared in the queue */
-	char		*e_to;		/* the target person */
-	char		*e_receiptto;	/* return receipt address */
-	ADDRESS		e_from;		/* the person it is from */
-	char		*e_sender;	/* e_from.q_paddr w comments stripped */
-	char		**e_fromdomain;	/* the domain part of the sender */
-	ADDRESS		*e_sendqueue;	/* list of message recipients */
-	ADDRESS		*e_errorqueue;	/* the queue for error responses */
-	long		e_msgsize;	/* size of the message in bytes */
-	long		e_flags;	/* flags, see below */
-	int		e_nrcpts;	/* number of recipients */
-	short		e_class;	/* msg class (priority, junk, etc.) */
-	short		e_hopcount;	/* number of times processed */
-	short		e_nsent;	/* number of sends since checkpoint */
-	short		e_sendmode;	/* message send mode */
-	short		e_errormode;	/* error return mode */
-	int		(*e_puthdr)__P((MCI *, ENVELOPE *));
-					/* function to put header of message */
-	int		(*e_putbody)__P((MCI *, ENVELOPE *, char *));
-					/* function to put body of message */
-	struct envelope	*e_parent;	/* the message this one encloses */
-	struct envelope *e_sibling;	/* the next envelope of interest */
-	char		*e_bodytype;	/* type of message body */
-	char		*e_df;		/* location of temp file */
-	FILE		*e_dfp;		/* temporary file */
-	char		*e_id;		/* code for this entry in queue */
-	FILE		*e_xfp;		/* transcript file */
-	FILE		*e_lockfp;	/* the lock file for this message */
-	char		*e_message;	/* error message */
-	char		*e_statmsg;	/* stat msg (changes per delivery) */
-	char		*e_msgboundary;	/* MIME-style message part boundary */
-	char		*e_origrcpt;	/* original recipient (one only) */
-	char		*e_macro[128];	/* macro definitions */
+    HDR		*e_header;	/* head of header list */
+    long		e_msgpriority;	/* adjusted priority of this message */
+    time_t		e_ctime;	/* time message appeared in the queue */
+    char		*e_to;		/* the target person */
+    char		*e_receiptto;	/* return receipt address */
+    ADDRESS		e_from;		/* the person it is from */
+    char		*e_sender;	/* e_from.q_paddr w comments stripped */
+    char		**e_fromdomain;	/* the domain part of the sender */
+    ADDRESS		*e_sendqueue;	/* list of message recipients */
+    ADDRESS		*e_errorqueue;	/* the queue for error responses */
+    long		e_msgsize;	/* size of the message in bytes */
+    long		e_flags;	/* flags, see below */
+    int		e_nrcpts;	/* number of recipients */
+    short		e_class;	/* msg class (priority, junk, etc.) */
+    short		e_hopcount;	/* number of times processed */
+    short		e_nsent;	/* number of sends since checkpoint */
+    short		e_sendmode;	/* message send mode */
+    short		e_errormode;	/* error return mode */
+    int		(*e_puthdr)__P((MCI *, ENVELOPE *));
+    /* function to put header of message */
+    int		(*e_putbody)__P((MCI *, ENVELOPE *, char *));
+    /* function to put body of message */
+    struct envelope	*e_parent;	/* the message this one encloses */
+    struct envelope *e_sibling;	/* the next envelope of interest */
+    char		*e_bodytype;	/* type of message body */
+    char		*e_df;		/* location of temp file */
+    FILE		*e_dfp;		/* temporary file */
+    char		*e_id;		/* code for this entry in queue */
+    FILE		*e_xfp;		/* transcript file */
+    FILE		*e_lockfp;	/* the lock file for this message */
+    char		*e_message;	/* error message */
+    char		*e_statmsg;	/* stat msg (changes per delivery) */
+    char		*e_msgboundary;	/* MIME-style message part boundary */
+    char		*e_origrcpt;	/* original recipient (one only) */
+    char		*e_macro[128];	/* macro definitions */
 };
 
 /* values for e_flags */
@@ -1661,57 +1661,57 @@ ENVELOPE
 
 EXTERN ENVELOPE	*CurEnv;	/* envelope currently being processed */
 /*
-**  Message priority classes.
-**
-**	The message class is read directly from the Priority: header
-**	field in the message.
-**
-**	CurEnv->e_msgpriority is the number of bytes in the message plus
-**	the creation time (so that jobs ``tend'' to be ordered correctly),
-**	adjusted by the message class, the number of recipients, and the
-**	amount of time the message has been sitting around.  This number
-**	is used to order the queue.  Higher values mean LOWER priority.
-**
-**	Each priority class point is worth WkClassFact priority points;
-**	each recipient is worth WkRecipFact priority points.  Each time
-**	we reprocess a message the priority is adjusted by WkTimeFact.
-**	WkTimeFact should normally decrease the priority so that jobs
-**	that have historically failed will be run later; thanks go to
-**	Jay Lepreau at Utah for pointing out the error in my thinking.
-**
-**	The "class" is this number, unadjusted by the age or size of
-**	this message.  Classes with negative representations will have
-**	error messages thrown away if they are not local.
-*/
+   **  Message priority classes.
+   **
+   **	The message class is read directly from the Priority: header
+   **	field in the message.
+   **
+   **	CurEnv->e_msgpriority is the number of bytes in the message plus
+   **	the creation time (so that jobs ``tend'' to be ordered correctly),
+   **	adjusted by the message class, the number of recipients, and the
+   **	amount of time the message has been sitting around.  This number
+   **	is used to order the queue.  Higher values mean LOWER priority.
+   **
+   **	Each priority class point is worth WkClassFact priority points;
+   **	each recipient is worth WkRecipFact priority points.  Each time
+   **	we reprocess a message the priority is adjusted by WkTimeFact.
+   **	WkTimeFact should normally decrease the priority so that jobs
+   **	that have historically failed will be run later; thanks go to
+   **	Jay Lepreau at Utah for pointing out the error in my thinking.
+   **
+   **	The "class" is this number, unadjusted by the age or size of
+   **	this message.  Classes with negative representations will have
+   **	error messages thrown away if they are not local.
+   */
 
 struct priority
 {
-	char	*pri_name;	/* external name of priority */
-	int	pri_val;	/* internal value for same */
+    char	*pri_name;	/* external name of priority */
+    int	pri_val;	/* internal value for same */
 };
 
 EXTERN struct priority	Priorities[MAXPRIORITIES];
 EXTERN int		NumPriorities;	/* pointer into Priorities */
 /*
-**  Rewrite rules.
-*/
+   **  Rewrite rules.
+   */
 
 struct rewrite
 {
-	char	**r_lhs;	/* pattern match */
-	char	**r_rhs;	/* substitution value */
-	struct rewrite	*r_next;/* next in chain */
+    char	**r_lhs;	/* pattern match */
+    char	**r_rhs;	/* substitution value */
+    struct rewrite	*r_next;/* next in chain */
 };
 
 EXTERN struct rewrite	*RewriteRules[MAXRWSETS];
 
 /*
-**  Special characters in rewriting rules.
-**	These are used internally only.
-**	The COND* rules are actually used in macros rather than in
-**		rewriting rules, but are given here because they
-**		cannot conflict.
-*/
+ **  Special characters in rewriting rules.
+ **	These are used internally only.
+ **	The COND* rules are actually used in macros rather than in
+ **		rewriting rules, but are given here because they
+ **		cannot conflict.
+ */
 
 /* left hand side items */
 # define MATCHZANY	0220	/* match zero or more tokens */
@@ -1750,59 +1750,59 @@ EXTERN struct rewrite	*RewriteRules[MAXRWSETS];
 /* external <==> internal mapping table */
 struct metamac
 {
-	char	metaname;	/* external code (after $) */
-	u_char	metaval;	/* internal code (as above) */
+    char	metaname;	/* external code (after $) */
+    u_char	metaval;	/* internal code (as above) */
 };
 /*
-**  Name canonification short circuit.
-**
-**	If the name server for a host is down, the process of trying to
-**	canonify the name can hang.  This is similar to (but alas, not
-**	identical to) looking up the name for delivery.  This stab type
-**	caches the result of the name server lookup so we don't hang
-**	multiple times.
-*/
+   **  Name canonification short circuit.
+   **
+   **	If the name server for a host is down, the process of trying to
+   **	canonify the name can hang.  This is similar to (but alas, not
+   **	identical to) looking up the name for delivery.  This stab type
+   **	caches the result of the name server lookup so we don't hang
+   **	multiple times.
+   */
 
 #define NAMECANON	struct _namecanon
 
 NAMECANON
 {
-	short		nc_errno;	/* cached errno */
-	short		nc_herrno;	/* cached h_errno */
-	short		nc_stat;	/* cached exit status code */
-	short		nc_flags;	/* flag bits */
-	char		*nc_cname;	/* the canonical name */
+    short		nc_errno;	/* cached errno */
+    short		nc_herrno;	/* cached h_errno */
+    short		nc_stat;	/* cached exit status code */
+    short		nc_flags;	/* flag bits */
+    char		*nc_cname;	/* the canonical name */
 };
 
 /* values for nc_flags */
 #define NCF_VALID	0x0001	/* entry valid */
 /*
-**  Mapping functions
-**
-**	These allow arbitrary mappings in the config file.  The idea
-**	(albeit not the implementation) comes from IDA sendmail.
-*/
+   **  Mapping functions
+   **
+   **	These allow arbitrary mappings in the config file.  The idea
+   **	(albeit not the implementation) comes from IDA sendmail.
+   */
 
 # define MAPCLASS	struct _mapclass
 # define MAP		struct _map
 
 
 /*
-**  An actual map.
-*/
+ **  An actual map.
+ */
 
 MAP
 {
-	MAPCLASS	*map_class;	/* the class of this map */
-	char		*map_mname;	/* name of this map */
-	int		map_mflags;	/* flags, see below */
-	char		*map_file;	/* the (nominal) filename */
-	ARBPTR_T	map_db1;	/* the open database ptr */
-	ARBPTR_T	map_db2;	/* an "extra" database pointer */
-	char		*map_app;	/* to append to successful matches */
-	char		*map_domain;	/* the (nominal) NIS domain */
-	char		*map_rebuild;	/* program to run to do auto-rebuild */
-	time_t		map_mtime;	/* last database modification time */
+    MAPCLASS	*map_class;	/* the class of this map */
+    char		*map_mname;	/* name of this map */
+    int		map_mflags;	/* flags, see below */
+    char		*map_file;	/* the (nominal) filename */
+    ARBPTR_T	map_db1;	/* the open database ptr */
+    ARBPTR_T	map_db2;	/* an "extra" database pointer */
+    char		*map_app;	/* to append to successful matches */
+    char		*map_domain;	/* the (nominal) NIS domain */
+    char		*map_rebuild;	/* program to run to do auto-rebuild */
+    time_t		map_mtime;	/* last database modification time */
 };
 
 /* bit values for map_flags */
@@ -1823,24 +1823,24 @@ MAP
 
 
 /*
-**  The class of a map -- essentially the functions to call
-*/
+ **  The class of a map -- essentially the functions to call
+ */
 
 MAPCLASS
 {
-	char	*map_cname;		/* name of this map class */
-	char	*map_ext;		/* extension for database file */
-	short	map_cflags;		/* flag bits, see below */
-	bool	(*map_parse)__P((MAP *, char *));
-					/* argument parsing function */
-	char	*(*map_lookup)__P((MAP *, char *, char **, int *));
-					/* lookup function */
-	void	(*map_store)__P((MAP *, char *, char *));
-					/* store function */
-	bool	(*map_open)__P((MAP *, int));
-					/* open function */
-	void	(*map_close)__P((MAP *));
-					/* close function */
+    char	*map_cname;		/* name of this map class */
+    char	*map_ext;		/* extension for database file */
+    short	map_cflags;		/* flag bits, see below */
+    bool	(*map_parse)__P((MAP *, char *));
+    /* argument parsing function */
+    char	*(*map_lookup)__P((MAP *, char *, char **, int *));
+    /* lookup function */
+    void	(*map_store)__P((MAP *, char *, char *));
+    /* store function */
+    bool	(*map_open)__P((MAP *, int));
+    /* open function */
+    void	(*map_close)__P((MAP *));
+    /* close function */
 };
 
 /* bit values for map_cflags */
@@ -1848,26 +1848,26 @@ MAPCLASS
 #define MCF_ALIASONLY	0x0002		/* usable only for aliases */
 #define MCF_REBUILDABLE	0x0004		/* can rebuild alias files */
 /*
-**  Symbol table definitions
-*/
+   **  Symbol table definitions
+   */
 
 struct symtab
 {
-	char		*s_name;	/* name to be entered */
-	char		s_type;		/* general type (see below) */
-	struct symtab	*s_next;	/* pointer to next in chain */
-	union
-	{
-		BITMAP		sv_class;	/* bit-map of word classes */
-		ADDRESS		*sv_addr;	/* pointer to address header */
-		MAILER		*sv_mailer;	/* pointer to mailer */
-		char		*sv_alias;	/* alias */
-		MAPCLASS	sv_mapclass;	/* mapping function class */
-		MAP		sv_map;		/* mapping function */
-		char		*sv_hostsig;	/* host signature */
-		MCI		sv_mci;		/* mailer connection info */
-		NAMECANON	sv_namecanon;	/* canonical name cache */
-	}	s_value;
+    char		*s_name;	/* name to be entered */
+    char		s_type;		/* general type (see below) */
+    struct symtab	*s_next;	/* pointer to next in chain */
+    union
+    {
+	BITMAP		sv_class;	/* bit-map of word classes */
+	ADDRESS		*sv_addr;	/* pointer to address header */
+	MAILER		*sv_mailer;	/* pointer to mailer */
+	char		*sv_alias;	/* alias */
+	MAPCLASS	sv_mapclass;	/* mapping function class */
+	MAP		sv_map;		/* mapping function */
+	char		*sv_hostsig;	/* host signature */
+	MCI		sv_mci;		/* mailer connection info */
+	NAMECANON	sv_namecanon;	/* canonical name cache */
+    }	s_value;
 };
 
 typedef struct symtab	STAB;
@@ -1901,42 +1901,42 @@ extern void		stabapply __P((void (*)(STAB *, int), int));
 # define ST_FIND	0	/* find entry */
 # define ST_ENTER	1	/* enter if not there */
 /*
-**  STRUCT EVENT -- event queue.
-**
-**	Maintained in sorted order.
-**
-**	We store the pid of the process that set this event to insure
-**	that when we fork we will not take events intended for the parent.
-*/
+   **  STRUCT EVENT -- event queue.
+   **
+   **	Maintained in sorted order.
+   **
+   **	We store the pid of the process that set this event to insure
+   **	that when we fork we will not take events intended for the parent.
+   */
 
 struct event
 {
-	time_t		ev_time;	/* time of the function call */
-	int		(*ev_func)__P((int));
-					/* function to call */
-	int		ev_arg;		/* argument to ev_func */
-	int		ev_pid;		/* pid that set this event */
-	struct event	*ev_link;	/* link to next item */
+    time_t		ev_time;	/* time of the function call */
+    int		(*ev_func)__P((int));
+    /* function to call */
+    int		ev_arg;		/* argument to ev_func */
+    int		ev_pid;		/* pid that set this event */
+    struct event	*ev_link;	/* link to next item */
 };
 
 typedef struct event	EVENT;
 
 EXTERN EVENT	*EventQueue;		/* head of event queue */
 /*
-**  Operation, send, and error modes
-**
-**	The operation mode describes the basic operation of sendmail.
-**	This can be set from the command line, and is "send mail" by
-**	default.
-**
-**	The send mode tells how to send mail.  It can be set in the
-**	configuration file.  It's setting determines how quickly the
-**	mail will be delivered versus the load on your system.  If the
-**	-v (verbose) flag is given, it will be forced to SM_DELIVER
-**	mode.
-**
-**	The error mode tells how to return errors.
-*/
+   **  Operation, send, and error modes
+   **
+   **	The operation mode describes the basic operation of sendmail.
+   **	This can be set from the command line, and is "send mail" by
+   **	default.
+   **
+   **	The send mode tells how to send mail.  It can be set in the
+   **	configuration file.  It's setting determines how quickly the
+   **	mail will be delivered versus the load on your system.  If the
+   **	-v (verbose) flag is given, it will be forced to SM_DELIVER
+   **	mode.
+   **
+   **	The error mode tells how to return errors.
+   */
 
 EXTERN char	OpMode;		/* operation mode, see below */
 
@@ -1969,14 +1969,14 @@ EXTERN char	OpMode;		/* operation mode, see below */
 #define EM_BERKNET	'e'		/* special berknet processing */
 #define EM_QUIET	'q'		/* don't print messages (stat only) */
 /*
-**  Additional definitions
-*/
+   **  Additional definitions
+   */
 
 
 /*
-**  Privacy flags
-**	These are bit values for the PrivacyFlags word.
-*/
+ **  Privacy flags
+ **	These are bit values for the PrivacyFlags word.
+ */
 
 #define PRIV_PUBLIC		0	/* what have I got to hide? */
 #define PRIV_NEEDMAILHELO	00001	/* insist on HELO for MAIL, at least */
@@ -1993,14 +1993,14 @@ EXTERN char	OpMode;		/* operation mode, see below */
 /* struct defining such things */
 struct prival
 {
-	char	*pv_name;	/* name of privacy flag */
-	int	pv_flag;	/* numeric level */
+    char	*pv_name;	/* name of privacy flag */
+    int	pv_flag;	/* numeric level */
 };
 
 
 /*
-**  Flags passed to remotename, parseaddr, allocaddr, and buildaddr.
-*/
+ **  Flags passed to remotename, parseaddr, allocaddr, and buildaddr.
+ */
 
 #define RF_SENDERADDR		0001	/* this is a sender address */
 #define RF_HEADERADDR		0002	/* this is a header address */
@@ -2013,8 +2013,8 @@ struct prival
 
 
 /*
-**  Flags passed to safefile.
-*/
+ **  Flags passed to safefile.
+ */
 
 #define SFF_ANYFILE		0	/* no special restrictions */
 #define SFF_MUSTOWN		0x0001	/* user must own this file */
@@ -2023,34 +2023,34 @@ struct prival
 
 
 /*
-**  Regular UNIX sockaddrs are too small to handle ISO addresses, so
-**  we are forced to declare a supertype here.
-*/
+ **  Regular UNIX sockaddrs are too small to handle ISO addresses, so
+ **  we are forced to declare a supertype here.
+ */
 
 union bigsockaddr
 {
-	struct sockaddr		sa;	/* general version */
+    struct sockaddr		sa;	/* general version */
 #ifdef NETUNIX
-	struct sockaddr_un	sunix;	/* UNIX family */
+    struct sockaddr_un	sunix;	/* UNIX family */
 #endif
 #ifdef NETINET
-	struct sockaddr_in	sin;	/* INET family */
+    struct sockaddr_in	sin;	/* INET family */
 #endif
 #ifdef NETISO
-	struct sockaddr_iso	siso;	/* ISO family */
+    struct sockaddr_iso	siso;	/* ISO family */
 #endif
 #ifdef NETNS
-	struct sockaddr_ns	sns;	/* XNS family */
+    struct sockaddr_ns	sns;	/* XNS family */
 #endif
 #ifdef NETX25
-	struct sockaddr_x25	sx25;	/* X.25 family */
+    struct sockaddr_x25	sx25;	/* X.25 family */
 #endif
 };
 
 #define SOCKADDR	union bigsockaddr
 /*
-**  Global variables.
-*/
+   **  Global variables.
+   */
 
 EXTERN bool	FromFlag;	/* if set, "From" person is explicit */
 EXTERN bool	MeToo;		/* send to the sender also */
@@ -2139,56 +2139,56 @@ extern int	errno;
 
 
 /*
-**  Timeouts
-**
-**	Indicated values are the MINIMUM per RFC 1123 section 5.3.2.
-*/
+ **  Timeouts
+ **
+ **	Indicated values are the MINIMUM per RFC 1123 section 5.3.2.
+ */
 
 EXTERN struct
 {
-			/* RFC 1123-specified timeouts [minimum value] */
-	time_t	to_initial;	/* initial greeting timeout [5m] */
-	time_t	to_mail;	/* MAIL command [5m] */
-	time_t	to_rcpt;	/* RCPT command [5m] */
-	time_t	to_datainit;	/* DATA initiation [2m] */
-	time_t	to_datablock;	/* DATA block [3m] */
-	time_t	to_datafinal;	/* DATA completion [10m] */
-	time_t	to_nextcommand;	/* next command [5m] */
-			/* following timeouts are not mentioned in RFC 1123 */
-	time_t	to_rset;	/* RSET command */
-	time_t	to_helo;	/* HELO command */
-	time_t	to_quit;	/* QUIT command */
-	time_t	to_miscshort;	/* misc short commands (NOOP, VERB, etc) */
-	time_t	to_ident;	/* IDENT protocol requests */
-			/* following are per message */
-	time_t	to_q_return;	/* queue return timeout */
-	time_t	to_q_warning;	/* queue warning timeout */
+    /* RFC 1123-specified timeouts [minimum value] */
+    time_t	to_initial;	/* initial greeting timeout [5m] */
+    time_t	to_mail;	/* MAIL command [5m] */
+    time_t	to_rcpt;	/* RCPT command [5m] */
+    time_t	to_datainit;	/* DATA initiation [2m] */
+    time_t	to_datablock;	/* DATA block [3m] */
+    time_t	to_datafinal;	/* DATA completion [10m] */
+    time_t	to_nextcommand;	/* next command [5m] */
+    /* following timeouts are not mentioned in RFC 1123 */
+    time_t	to_rset;	/* RSET command */
+    time_t	to_helo;	/* HELO command */
+    time_t	to_quit;	/* QUIT command */
+    time_t	to_miscshort;	/* misc short commands (NOOP, VERB, etc) */
+    time_t	to_ident;	/* IDENT protocol requests */
+    /* following are per message */
+    time_t	to_q_return;	/* queue return timeout */
+    time_t	to_q_warning;	/* queue warning timeout */
 } TimeOuts;
 
 
 /*
-**  Trace information
-*/
+ **  Trace information
+ */
 
 /* trace vector and macros for debugging flags */
 EXTERN u_char	tTdvect[100];
 # define tTd(flag, level)	(tTdvect[flag] >= level)
 # define tTdlevel(flag)		(tTdvect[flag])
 /*
-**  Miscellaneous information.
-*/
+   **  Miscellaneous information.
+   */
 
 
 
 /*
-**  Some in-line functions
-*/
+ **  Some in-line functions
+ */
 
 /* set exit status */
 #define setstat(s)	{ \
-				if (ExitStat == EX_OK || ExitStat == EX_TEMPFAIL) \
-					ExitStat = s; \
-			}
+    if (ExitStat == EX_OK || ExitStat == EX_TEMPFAIL) \
+    ExitStat = s; \
+}
 
 /* make a copy of a string */
 #define newstr(s)	strcpy(xalloc(strlen(s) + 1), s)
@@ -2197,8 +2197,8 @@ EXTERN u_char	tTdvect[100];
 
 
 /*
-**  Declarations of useful functions
-*/
+ **  Declarations of useful functions
+ */
 
 extern ADDRESS		*parseaddr __P((char *, ADDRESS *, int, int, char **, ENVELOPE *));
 extern char		*xalloc __P((int));

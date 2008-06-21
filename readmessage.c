@@ -1,5 +1,8 @@
 /*
  * $Log: readmessage.c,v $
+ * Revision 1.7  2008/06/21 17:17:34  tjd
+ * reindent everything
+ *
  * Revision 1.6  2004/02/09 15:53:40  tjd
  * add 'u' option to put a url or other per-recipient text at the end of
  * each message
@@ -41,46 +44,46 @@ extern int messagebody_size;
 
 static void failmpp(char *message)
 {
-	fprintf(stderr,"mpp failed: %s\n",message);
-	exit(1);
+    fprintf(stderr,"mpp failed: %s\n",message);
+    exit(1);
 }
 
 void readmessage(char *filename,char *mpp)
 {
-	char cmd[MAXPATHLEN];
-	char outfname[80];
-	struct stat sbuf;
-	int fd;
+    char cmd[MAXPATHLEN];
+    char outfname[80];
+    struct stat sbuf;
+    int fd;
 
-	sprintf(outfname,"/tmp/mpp.%d",getpid());
-	sprintf(cmd,"%s %s %s %s",mpp,filename,outfname,mailfrom);
+    sprintf(outfname,"/tmp/mpp.%d",getpid());
+    sprintf(cmd,"%s %s %s %s",mpp,filename,outfname,mailfrom);
 
-	if(system(cmd))
-		failmpp("exec");
+    if(system(cmd))
+	failmpp("exec");
 
-	if((fd=open(outfname,O_RDONLY,0)) == -1)
-		failmpp("open");
+    if((fd=open(outfname,O_RDONLY,0)) == -1)
+	failmpp("open");
 
-	if(stat(outfname,&sbuf) == -1)
-		failmpp("stat");
+    if(stat(outfname,&sbuf) == -1)
+	failmpp("stat");
 
-	if((messagebody_size=sbuf.st_size)==0) failmpp("size==0");
+    if((messagebody_size=sbuf.st_size)==0) failmpp("size==0");
 
-	/* mmap() here for other architectures! */
-	/* allocate an extra 1k to hold the URL */
-	if(!(messagebody=malloc(messagebody_size+1+1024))) {
-		perror("malloc");
-		failmpp("malloc");
-	}
+    /* mmap() here for other architectures! */
+    /* allocate an extra 1k to hold the URL */
+    if(!(messagebody=malloc(messagebody_size+1+1024))) {
+	perror("malloc");
+	failmpp("malloc");
+    }
 
-	if(read(fd,messagebody,messagebody_size) != messagebody_size)
-		failmpp("read");
+    if(read(fd,messagebody,messagebody_size) != messagebody_size)
+	failmpp("read");
 
-	close(fd);
-	unlink(outfname);
+    close(fd);
+    unlink(outfname);
 
-	messagebody[messagebody_size]='\0';
+    messagebody[messagebody_size]='\0';
 
-	if(strcmp(messagebody+messagebody_size-5,"\r\n.\r\n"))
-		failmpp("trailer");
+    if(strcmp(messagebody+messagebody_size-5,"\r\n.\r\n"))
+	failmpp("trailer");
 }

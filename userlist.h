@@ -1,5 +1,8 @@
 /*
  * $Log: userlist.h,v $
+ * Revision 1.5  2008/06/21 17:17:34  tjd
+ * reindent everything
+ *
  * Revision 1.4  1996/01/02 04:30:43  tjd
  * added SMTP status code to bounce messages
  *
@@ -14,13 +17,28 @@
  *
  */
 
-typedef enum { ok=0, long_addr, bad_addr, long_host, /* from do_list */
-		 host_failure, caught_signal,
-		 unk_addr } bounce_reason;
+typedef enum
+{
+    ok = 0,
+    long_addr,
+    bad_addr,
+    long_host, /* from do_list */
+    host_failure,
+    caught_signal,
+    unk_addr
+} bounce_reason;
 
-#define BOUNCE_REASONS { "ok","addr too long","invalid address","host too long", "host failure", "died on signal", "user unknown" }
+#define BOUNCE_REASONS { \
+    "ok", \
+    "addr too long", \
+    "invalid address", \
+    "host too long", \
+    "host failure", \
+    "died on signal", \
+    "user unknown" \
+}
 
 typedef struct {
-	int statcode;
-	char *addr;
+    int statcode;
+    char *addr;
 } userlist;
