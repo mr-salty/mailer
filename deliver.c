@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.31  2008/06/21 15:44:26  tjd
+ * lower connect timeout to 10 for hotmail to avoid getting hung up
+ *
  * Revision 1.30  2005/10/14 16:35:59  tjd
  * add a new per-session timeout of 75s, in case we have many MXs that are
  * all taking 30s to timeout.
@@ -159,6 +162,8 @@ static flags_t flags;
 static char *hostname2;	/* filled in by deliver() */
 #endif
 
+static time_t start_t; /* filled in at start of deliver(), used by debug() */
+
 #include <stdarg.h>
 void debug(char *format,...) {
 #ifdef DEBUG_SMTP
@@ -185,6 +190,7 @@ void debug(char *format,...) {
 	    return;
 	}
     }
+    fprintf(fpLog, "%ld ", time(NULL) - start_t);
     vfprintf(fpLog,format,ap);
 
     va_end(ap);
@@ -212,9 +218,9 @@ int deliver(char *hostname,userlist users[], flags_t in_flags)
 {
 	struct hostent *host;
 	int nmx,rcode,i,p,deliver_status=0,taddr;
-	time_t start_t;
 	
 	char *mxhosts[MAXMXHOSTS+1];
+	start_t=time(NULL);
 	in_child=1;
 	gl_users=users;
 
@@ -224,7 +230,6 @@ int deliver(char *hostname,userlist users[], flags_t in_flags)
 #endif
 	debug("Hostname: %s\n",hostname);
 
-	start_t=time(NULL);
 	nmx=getmxrr(hostname,mxhosts,0,&rcode);
 	debug("Number of MX records: %d\n",nmx);
 
@@ -332,6 +337,11 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 	int s,p;
 	struct sockaddr_in sock;
 	int rcpt_fail;
+	int connect_timeout = CONNECT_TIMEOUT;
+	if (!strcasecmp(hostname, "hotmail.com"))
+	{
+	    connect_timeout = 10;
+	}
 
 #ifndef NO_DELIVERY
 	sock.sin_family=AF_INET;
@@ -358,9 +368,10 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
 		close(s);
 		return -1;
 	}
-	alarm(CONNECT_TIMEOUT);
+	alarm(connect_timeout);
 
-	debug("SMTP: trying %s\n",inet_ntoa(sock.sin_addr));
+	debug("SMTP: trying %s timeout %d\n",inet_ntoa(sock.sin_addr),
+	      connect_timeout);
 	if(connect(s,(struct sockaddr *)&sock,sizeof(struct sockaddr_in)) == -1)
 	{
 		alarm(0);
