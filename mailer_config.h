@@ -1,5 +1,5 @@
 /*
- * $Id: mailer_config.h,v 1.20 2005/10/14 16:35:59 tjd Exp $
+ * $Id: mailer_config.h,v 1.21 2008/06/21 15:44:08 tjd Exp $
  */
 
 /* debug stuff */
@@ -83,7 +83,7 @@ typedef short flags_t;
 
 /* SMTP: timeouts as defined in RFC1123 */
 #define CONNECT_TIMEOUT		30	/* timeout for tcp connect() */
-#define SMTP_TIMEOUT_WELCOME	30
+#define SMTP_TIMEOUT_WELCOME	60
 #define SMTP_TIMEOUT_HELO	30	/* not defined in 1123 */
 #define SMTP_TIMEOUT_MAIL	30
 #define SMTP_TIMEOUT_RCPT	30
