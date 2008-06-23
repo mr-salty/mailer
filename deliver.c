@@ -1,5 +1,8 @@
 /*
  * $Log: deliver.c,v $
+ * Revision 1.33  2008/06/23 18:27:08  tjd
+ * add support for YOUR-EMAIL-ADDRESS - encoded/unencoded email address insertion
+ *
  * Revision 1.32  2008/06/21 17:17:34  tjd
  * reindent everything
  *
@@ -146,7 +149,8 @@ int bounce(userlist users[],bounce_reason fail_all);
 static char buf[TMPBUFLEN];
 static int last_status;		/* status of last lookfor() */
 extern char *messagebody,*myhostname,*mailfrom;
-extern int messagebody_size;
+extern MessageChunk message[];
+extern size_t message_chunks;
 
 #if defined(USE_IDTAGS) && defined(TWEAK_BODY)
 extern char *g_body_idptr;
@@ -304,26 +308,34 @@ int deliver(char *hostname,userlist users[], flags_t in_flags)
 jmp_buf jmpbuf; /* for alarm */
 static void handle_alarm(int dummy);
 
-void put_url(char* s, char* addr)
+int urlencode(char* s, char* addr)
 {
-#if 0
-    /* puts a URL to unsubscribe in the body */
     static char *hexdigits = "0123456789abcdef";
     char *p;
-    s += sprintf(s, "\r\nTo unsubscribe: http://wordsmith.org/unsub?");
+    int len = 0;
     for (p = addr; *p; ++p)
     {
 	if (isalnum(*p))
 	{
-	    *s++ = *p;
+	    s[len++] = *p;
 	}
 	else
 	{
-	    *s++ = '%';
-	    *s++ = hexdigits[(*p >> 4) & 0xf];
-	    *s++ = hexdigits[(*p) & 0xf];
+	    s[len++] = '%';
+	    s[len++] = hexdigits[(*p >> 4) & 0xf];
+	    s[len++] = hexdigits[(*p) & 0xf];
 	}
     }
+    s[len] = '\0';
+    return len;
+}
+
+void put_url(char* s, char* addr)
+{
+#if 0
+    /* puts a URL to unsubscribe in the body */
+    s += sprintf(s, "\r\nTo unsubscribe: http://wordsmith.org/unsub?");
+    urlencode(s, addr);
 #else
     /* just puts a message in the body */
     s += sprintf(s, "\r\nThis message was sent to \"%s\".", addr);
@@ -473,7 +485,7 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
     }
 #endif
 
-    switch(smtp_write(s,1,messagebody,NULL,250,SMTP_TIMEOUT_END))
+    switch(smtp_write(s,1,users[0].addr,NULL,250,SMTP_TIMEOUT_END))
     {
       case -1:
 	return -1;
@@ -514,34 +526,71 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
  *			[last_status will be set]
  *
  * if fmt is NULL we don't do the write, just lookfor.
- * if arg is NULL we don't sprintf, but use fmt as the pointer.
+ * if arg is NULL this is the message body and we process it in chunks.
+ *	fmt contains the address in this case.
  */
 
 static int smtp_write(int s, int close_s, char *fmt, char *arg, int look,
 		      int timeout)
 {
-    char *wbuf;
-
     if(fmt != NULL)
     {
 	if(arg != NULL) {
-	    sprintf(buf,fmt,arg);
-	    wbuf=buf;
-	    debug("%s",wbuf);
-	} else {
-	    wbuf=fmt;
-	    debug("SMTP: [Message body omitted]\n");
-	}
-
+	    int len = sprintf(buf,fmt,arg);
+	    debug("%s",buf);
 #ifndef NO_DELIVERY
-	if(write(s,wbuf,strlen(wbuf)) == -1)
-	{
-	    debug("SMTP: write: errno %d\n",errno);
-	    close(s);
-	    return -1;
+	    if(write(s,buf,len) == -1)
+	    {
+		debug("SMTP: write: errno %d\n",errno);
+		close(s);
+		return -1;
+	    }
+#endif /* NO_DELIVERY */
+	} else {
+	    size_t idx;
+	    debug("SMTP: [Message body omitted]\n");
+	    for (idx = 0; idx < message_chunks; ++idx)
+	    {
+#ifndef NO_DELIVERY
+		if (write(s,message[idx].ptr, message[idx].len) == -1)
+		{
+		    debug("SMTP: write: errno %d\n",errno);
+		    close(s);
+		    return -1;
+		}
+
+		switch (message[idx].action)
+		{
+		  case ACTION_NONE:
+		    break;
+
+		  case ACTION_TO_ADDR:
+		    if (write(s, fmt, strlen(fmt)) == -1)
+		    {
+		       	debug("SMTP: write: errno %d\n",errno);
+			close(s);
+			return -1;
+		    }
+		    break;
+
+		  case ACTION_ENCODED_TO_ADDR: {
+		    char tmpbuf[3 * MAX_ADDR_LEN];
+		    int len = urlencode(tmpbuf, fmt);
+		    if (write(s, tmpbuf, len) == -1)
+		    {
+		       	debug("SMTP: write: errno %d\n",errno);
+			close(s);
+			return -1;
+		    }
+		    break;
+		    }
+		}
+	    }
 	}
+#endif /* NO_DELIVERY */
     }
 
+#ifndef NO_DELIVERY
     if(!lookfor(s,look,timeout)) {
 	if(close_s) close(s);
 	return 1;

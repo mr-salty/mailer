@@ -1,5 +1,8 @@
 /* 
  * $Log: do_list.c,v $
+ * Revision 1.43  2008/06/23 18:27:08  tjd
+ * add support for YOUR-EMAIL-ADDRESS - encoded/unencoded email address insertion
+ *
  * Revision 1.42  2008/06/21 17:17:34  tjd
  * reindent everything
  *
@@ -164,47 +167,52 @@
 #include "mailer_config.h"
 #include "userlist.h"
 
-    static char curhost[MAX_HOSTNAME_LEN+1]; /* +1 for null */
-    static char buf[BUFFER_LEN+1];	     /* +1 for temp newline (null) */
-    static userlist users[ADDRS_PER_BUF+1];  /* +1 for null marker at end */
+static char curhost[MAX_HOSTNAME_LEN+1]; /* +1 for null */
+static char buf[BUFFER_LEN+1];	     /* +1 for temp newline (null) */
+static userlist users[ADDRS_PER_BUF+1];  /* +1 for null marker at end */
 
-    static int numchildren=0,delivery_rate=TARGET_RATE;
-    static int numforks=0,numprocessed=0,numfailed=0;
-    static int real_numprocessed=0,skip_addrs = 0;
-    static int list_line = 0, batch_id = 0, batch_size = 0;
-    static int max_child,min_child,target_rate;
+static int numchildren=0,delivery_rate=TARGET_RATE;
+static int numforks=0,numprocessed=0,numfailed=0;
+static int real_numprocessed=0,skip_addrs = 0;
+static int list_line = 0, batch_id = 0, batch_size = 0;
+static int max_child,min_child,target_rate;
 
-    int deliver(char *hostname,userlist users[],flags_t in_flags);
-    void bounce_user(char *addr,bounce_reason why,int statcode);
-    void handle_sig(int sig),signal_backend(int sig);
-    static int parse_address(FILE *f, char **abuf, char **start, char **host);
-    static void do_delivery(flags_t flags),do_status();
-    static void setup_signals(),schedule();
-    static int handle_child();
-    static int read_config_file(char *filename);
-    static int get_config_entry(char *host, flags_t *flags);
+int deliver(char *hostname,userlist users[],flags_t in_flags);
+void bounce_user(char *addr,bounce_reason why,int statcode);
+void handle_sig(int sig),signal_backend(int sig);
+static int parse_address(FILE *f, char **abuf, char **start, char **host);
+static void do_delivery(flags_t flags),do_status();
+static void setup_signals(),schedule();
+static int handle_child();
+static int read_config_file(char *filename);
+static int get_config_entry(char *host, flags_t *flags);
+
+extern char *messagebody;
+char *ptr;
+
+#define MAX_CHUNKS 10
+MessageChunk message[MAX_CHUNKS];
+size_t message_chunks = 0;
 
 #if defined(USE_IDTAGS)
 
-    extern char *messagebody;
-
 #if defined(TWEAK_MSGID)
-    static char *idptr;
+static char *idptr;
 #endif /* TWEAK_MSGID */
 
 #if defined(TWEAK_RCVHDR)
-    static char *r_idptr;
+static char *r_idptr;
 #endif /* TWEAK_RCVHDR */
 
 #if defined(TWEAK_FROMADDR)
-    extern char *mailfrom;
-    static char *f_idptr, *f_addrptr;
-    static int f_addrlen;
+extern char *mailfrom;
+static char *f_idptr, *f_addrptr;
+static int f_addrlen;
 #endif	/* TWEAK_FROMADDR */
 
 #if defined(TWEAK_BODY)
-    static char *b_idptr;
-    char *g_body_idptr;	/* used in deliver() */
+static char *b_idptr;
+char *g_body_idptr;	/* used in deliver() */
 #endif /* TWEAK_BODY */
 
 #endif	/* USE_IDTAGS */
@@ -282,6 +290,40 @@ void do_list(char *fname)
 #endif /* TWEAK_BODY */
 #endif	/* USE_IDTAGS */
 
+    message_chunks = 0;
+    ptr = messagebody;
+#ifdef SINGLE_RECIPIENT
+    {
+	char* endptr = messagebody;
+	while ((endptr = strstr(ptr, ADDRESS_TOKEN)))
+	{
+	    message[message_chunks].ptr = ptr;
+	    message[message_chunks].len = endptr - ptr;
+	    if (!strncmp(endptr - 4, "To: ", 4))
+	    {
+		message[message_chunks].action = ACTION_TO_ADDR;
+	    }
+	    else
+	    {
+		message[message_chunks].action = ACTION_ENCODED_TO_ADDR;
+	    }
+
+	    if (++message_chunks == (MAX_CHUNKS - 1)) {
+		fprintf(stderr, "Too many message chunks");
+		exit(-1);
+	    }
+	    ptr = endptr + sizeof(ADDRESS_TOKEN) - 1;
+	}
+	/* Code below handles the last chunk */
+    }
+#endif
+
+    /* Also gets executed if !SINGLE_RECIPIENT */
+    message[message_chunks].ptr = ptr;
+    message[message_chunks].len = strlen(ptr);
+    message[message_chunks].action = ACTION_NONE;
+    ++message_chunks;
+
     /* main loop.
      * next holds next empty buffer position
      * addr points to start of current address
@@ -326,6 +368,9 @@ void do_list(char *fname)
 	    curhostlen = hostlen;
 	    curhost[curhostlen]='\0';
 	    addrs_per_buf=get_config_entry(curhost, &flags);
+#ifdef SINGLE_RECIPIENT
+		    addrs_per_buf = 1;
+#endif
 	}
 
 	if(inbuf == 0) {
@@ -752,7 +797,8 @@ static void setup_signals()
 
     /* catch all signals not explicitly named */
 
-    for(i=1;i<NSIG;++i)
+    /* should be NSIG but linux gives an error when you use NSIG */
+    for(i=1;i<32;++i)
     {
 	switch(i) {
 	  case SIGKILL: case SIGSTOP: case SIGTSTP:

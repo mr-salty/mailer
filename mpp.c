@@ -1,5 +1,8 @@
 /*
  * $Log: mpp.c,v $
+ * Revision 1.19  2008/06/23 18:27:08  tjd
+ * add support for YOUR-EMAIL-ADDRESS - encoded/unencoded email address insertion
+ *
  * Revision 1.18  2008/06/21 17:17:34  tjd
  * reindent everything
  *
@@ -171,7 +174,7 @@ int main(int argc, char *argv[])
 
     /* received header */
     sprintf(p,"Received: from local (localhost)\r\n"
-	    "\tby %s (mailer 1.8) with SMTP", host);
+	    "\tby %s (mailer 1.9) with SMTP", host);
     p+=strlen(p);
 #if defined(USE_IDTAGS) && defined(TWEAK_RCVHDR)
     sprintf(p," id <%s>", idtag);

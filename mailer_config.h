@@ -1,5 +1,5 @@
 /*
- * $Id: mailer_config.h,v 1.21 2008/06/21 15:44:08 tjd Exp $
+ * $Id: mailer_config.h,v 1.22 2008/06/23 18:27:08 tjd Exp $
  */
 
 /* debug stuff */
@@ -61,8 +61,11 @@ typedef short flags_t;
 /* #define TWEAK_FROMADDR */
 
 /* this will embed the message-id in the body if FL_IDTAG_BODY is set */
-#define TWEAK_BODY
+#undef TWEAK_BODY
 #endif				/* USE_IDTAGS */
+
+/* force single-recpient as well as related tweaks using To-address */
+#define SINGLE_RECIPIENT
 
 /* list processing parameters */
 #define MAX_ADDR_LEN    256	/* single address size limit: RFC821 */
