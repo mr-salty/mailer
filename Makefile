@@ -1,5 +1,5 @@
 # Makefile for mailer
-# $Id: Makefile,v 1.1 1996/05/11 18:33:53 tjd Exp $
+# $Id: Makefile,v 1.2 2008/06/23 21:09:22 tjd Exp $
 
 CC=gcc
 WFLAGS=-Wall -pedantic
@@ -12,7 +12,7 @@ CFLAGS=$(WFLAGS) $(OFLAGS)
 #CFLAGS=$(WFLAGS) $(GFLAGS)
 #LDFLAGS=$(GFLAGS)
 
-MLIBS=# -lresolv -l44bsd	# needed for lrdc5, new bind not in libc.
+MLIBS= -lresolv # -l44bsd	# needed for lrdc5, new bind not in libc.
 
 MAILER=mailer
 MPP=mpp
