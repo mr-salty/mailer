@@ -1,23 +1,5 @@
 /*
- * $Log: userlist.h,v $
- * Revision 1.6  2008/06/23 18:27:08  tjd
- * add support for YOUR-EMAIL-ADDRESS - encoded/unencoded email address insertion
- *
- * Revision 1.5  2008/06/21 17:17:34  tjd
- * reindent everything
- *
- * Revision 1.4  1996/01/02 04:30:43  tjd
- * added SMTP status code to bounce messages
- *
- * Revision 1.3  1996/01/02  00:29:11  tjd
- * added signal handling code
- *
- * Revision 1.2  1995/12/31  20:14:42  tjd
- * added 550/551/generic user unknown indication
- *
- * Revision 1.1  1995/12/14 15:23:30  tjd
- * Initial revision
- *
+ * $Id$
  */
 
 typedef enum

@@ -1,20 +1,5 @@
 /*
- * $Log: bounce.c,v $
- * Revision 1.5  2008/06/21 17:17:34  tjd
- * reindent everything
- *
- * Revision 1.4  1996/02/12 00:42:15  tjd
- * added file locking and logging to BOUNCE_FILE
- *
- * Revision 1.3  1996/01/02 04:30:43  tjd
- * added SMTP status code to bounce messages
- *
- * Revision 1.2  1996/01/02  00:28:11  tjd
- * added defug code to check for null userlist
- *
- * Revision 1.1  1995/12/14  15:23:30  tjd
- * Initial revision
- *
+ * $Id$
  */
 
 #include <stdio.h>

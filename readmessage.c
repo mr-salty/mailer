@@ -1,28 +1,5 @@
 /*
- * $Log: readmessage.c,v $
- * Revision 1.7  2008/06/21 17:17:34  tjd
- * reindent everything
- *
- * Revision 1.6  2004/02/09 15:53:40  tjd
- * add 'u' option to put a url or other per-recipient text at the end of
- * each message
- *
- * Revision 1.5  1997/11/24 22:39:54  tjd
- * made the From: header get tweaked by TWEAK_FROMADDR as well
- *
- * Revision 1.4  1996/03/04 04:03:22  tjd
- * changed PATH_MAX to MAXPATHLEN for filename buffer
- *
- * Revision 1.3  1996/02/15 04:09:05  tjd
- * no longer exec mpp through a pipe, but we use a temp file instead
- * this in preparation for mmap()ing the message
- *
- * Revision 1.2  1996/01/01 22:40:43  tjd
- * fixed read() logic for messages > pipe capacity
- *
- * Revision 1.1  1995/12/14  15:23:30  tjd
- * Initial revision
- *
+ * $Id$
  */
 
 #include <unistd.h>

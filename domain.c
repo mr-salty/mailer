@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * Copyright (c) 1986 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,17 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Log: domain.c,v $
- * Revision 1.3  2008/06/21 17:17:34  tjd
- * reindent everything
- *
- * Revision 1.2  1997/10/11 02:47:02  tjd
- * get rid of some compiler warnings
- *
- * Revision 1.1  1995/12/14 15:23:30  tjd
- * Initial revision
- *
  */
 
 #include "sendmail.h"

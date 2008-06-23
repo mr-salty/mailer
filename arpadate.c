@@ -1,4 +1,6 @@
 /*
+ * $Id$
+ *
  * Copyright (c) 1983 Eric P. Allman
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,23 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Log: arpadate.c,v $
- * Revision 1.5  2008/06/21 17:17:34  tjd
- * reindent everything
- *
- * Revision 1.4  2004/02/08 16:35:30  tjd
- * include time.h
- *
- * Revision 1.3  1996/05/02 22:54:31  tjd
- * cleanups.
- *
- * Revision 1.2  1996/01/01 22:05:30  tjd
- * added unistd.h for NULL on sun
- *
- * Revision 1.1  1995/12/14  15:23:30  tjd
- * Initial revision
- *
  */
 
 #include <time.h>

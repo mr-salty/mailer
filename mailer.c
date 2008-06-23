@@ -1,21 +1,5 @@
 /*
- * $Log: mailer.c,v $
- * Revision 1.5  2008/06/21 17:17:34  tjd
- * reindent everything
- *
- * Revision 1.4  1998/09/30 21:45:42  tjd
- * make mailer become leader of its own session and pgrp
- * bump version to 1.6
- *
- * Revision 1.3  1998/02/17 16:28:52  tjd
- * added skip_addrs function
- *
- * Revision 1.2  1996/05/02 22:39:41  tjd
- * removed all dependencies on useful.h
- *
- * Revision 1.1  1995/12/14 15:23:30  tjd
- * Initial revision
- *
+ * $Id$
  */
 
 #include <stdio.h>

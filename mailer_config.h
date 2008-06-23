@@ -1,5 +1,5 @@
 /*
- * $Id: mailer_config.h,v 1.22 2008/06/23 18:27:08 tjd Exp $
+ * $Id$
  */
 
 /* debug stuff */
