@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
     /* received header */
     sprintf(p,"Received: from local (localhost)\r\n"
-	    "\tby %s (mailer 1.9) with SMTP", host);
+	    "\tby %s (mailer 1.10) with SMTP", host);
     p+=strlen(p);
 #if defined(USE_IDTAGS) && defined(TWEAK_RCVHDR)
     sprintf(p," id <%s>", idtag);

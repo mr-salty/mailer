@@ -32,8 +32,10 @@ static int list_line = 0, batch_id = 0, batch_size = 0;
 static int max_child,min_child,target_rate;
 
 int deliver(char *hostname,userlist users[],flags_t in_flags);
+void readmessage();
 void bounce_user(char *addr,bounce_reason why,int statcode);
 void handle_sig(int sig),signal_backend(int sig);
+static void process_message();
 static int parse_address(FILE *f, char **abuf, char **start, char **host);
 static void do_delivery(flags_t flags),do_status();
 static void setup_signals(),schedule();
@@ -42,7 +44,7 @@ static int read_config_file(char *filename);
 static int get_config_entry(char *host, flags_t *flags);
 
 extern char *messagebody;
-char *ptr;
+static int reread_message = 0;
 
 #define MAX_CHUNKS 10
 MessageChunk message[MAX_CHUNKS];
@@ -74,9 +76,6 @@ char *g_body_idptr;	/* used in deliver() */
 void do_list(char *fname)
 {
     FILE *f;
-#if defined(USE_IDTAGS)
-    char *last_idptr;
-#endif
 
     int inbuf,hostlen,curhostlen,wait_timeout,fd,next_status=STATUS;
     char *next,*addr,*host;
@@ -111,72 +110,7 @@ void do_list(char *fname)
 
     do_status();
     setup_signals();
-
-#if defined(USE_IDTAGS)
-    last_idptr=messagebody;
-    /* mpp puts '\xff'00000.000 where we need to insert id tags */
-
-#if defined(TWEAK_RCVHDR)
-    r_idptr=index(last_idptr, '\xff');
-    last_idptr=r_idptr+1;
-#endif /* TWEAK_RCVHDR */
-
-#if defined(TWEAK_MSGID)
-    idptr=index(last_idptr,'\xff');
-    last_idptr=idptr+1;
-#endif /* TWEAK_MSGID */
-
-#if defined(TWEAK_FROMADDR)
-    f_idptr=index(last_idptr, '\xff');
-    last_idptr=f_idptr+1;
-
-    /* find the start and length of the whole address */
-    for(f_addrptr=(f_idptr) ; *(f_addrptr-1) != '<'; --f_addrptr) {} 
-    f_addrlen=index(f_addrptr,'>') - f_addrptr;
-#endif	/* TWEAK_FROMADDR */
-
-#if defined(TWEAK_BODY)
-    b_idptr=index(last_idptr, '\xff');
-    last_idptr=b_idptr+1;
-
-    /* find the start of the last line */
-    for(g_body_idptr=b_idptr;*(g_body_idptr-1) != '\n'; --g_body_idptr) {}
-#endif /* TWEAK_BODY */
-#endif	/* USE_IDTAGS */
-
-    message_chunks = 0;
-    ptr = messagebody;
-#ifdef SINGLE_RECIPIENT
-    {
-	char* endptr = messagebody;
-	while ((endptr = strstr(ptr, ADDRESS_TOKEN)))
-	{
-	    message[message_chunks].ptr = ptr;
-	    message[message_chunks].len = endptr - ptr;
-	    if (!strncmp(endptr - 4, "To: ", 4))
-	    {
-		message[message_chunks].action = ACTION_TO_ADDR;
-	    }
-	    else
-	    {
-		message[message_chunks].action = ACTION_ENCODED_TO_ADDR;
-	    }
-
-	    if (++message_chunks == (MAX_CHUNKS - 1)) {
-		fprintf(stderr, "Too many message chunks");
-		exit(-1);
-	    }
-	    ptr = endptr + sizeof(ADDRESS_TOKEN) - 1;
-	}
-	/* Code below handles the last chunk */
-    }
-#endif
-
-    /* Also gets executed if !SINGLE_RECIPIENT */
-    message[message_chunks].ptr = ptr;
-    message[message_chunks].len = strlen(ptr);
-    message[message_chunks].action = ACTION_NONE;
-    ++message_chunks;
+    process_message();
 
     /* main loop.
      * next holds next empty buffer position
@@ -190,6 +124,15 @@ void do_list(char *fname)
 
     while((hostlen=parse_address(f,&next,&addr,&host)))
     {
+	if (reread_message)
+	{
+	    reread_message = 0;
+	    fprintf(stderr, "Rereading message via SIGHUP\n");
+	    do_status();
+	    readmessage();
+	    process_message();
+	}
+
 	if(real_numprocessed >= next_status)
 	{
 	    do_status();
@@ -280,6 +223,80 @@ void do_list(char *fname)
 	/* doesn't return */
     }
 }
+
+/*
+ * post-processing on the messagebody to find places to insert tags, etc.
+ */
+static void process_message()
+{
+#if defined(USE_IDTAGS)
+    char *last_idptr = messagebody;
+    char *ptr;
+    /* mpp puts '\xff'00000.000 where we need to insert id tags */
+
+#if defined(TWEAK_RCVHDR)
+    r_idptr=index(last_idptr, '\xff');
+    last_idptr=r_idptr+1;
+#endif /* TWEAK_RCVHDR */
+
+#if defined(TWEAK_MSGID)
+    idptr=index(last_idptr,'\xff');
+    last_idptr=idptr+1;
+#endif /* TWEAK_MSGID */
+
+#if defined(TWEAK_FROMADDR)
+    f_idptr=index(last_idptr, '\xff');
+    last_idptr=f_idptr+1;
+
+    /* find the start and length of the whole address */
+    for(f_addrptr=(f_idptr) ; *(f_addrptr-1) != '<'; --f_addrptr) {} 
+    f_addrlen=index(f_addrptr,'>') - f_addrptr;
+#endif	/* TWEAK_FROMADDR */
+
+#if defined(TWEAK_BODY)
+    b_idptr=index(last_idptr, '\xff');
+    last_idptr=b_idptr+1;
+
+    /* find the start of the last line */
+    for(g_body_idptr=b_idptr;*(g_body_idptr-1) != '\n'; --g_body_idptr) {}
+#endif /* TWEAK_BODY */
+#endif	/* USE_IDTAGS */
+
+    message_chunks = 0;
+    ptr = messagebody;
+#ifdef SINGLE_RECIPIENT
+    {
+	char* endptr = messagebody;
+	while ((endptr = strstr(ptr, ADDRESS_TOKEN)))
+	{
+	    message[message_chunks].ptr = ptr;
+	    message[message_chunks].len = endptr - ptr;
+	    if (!strncmp(endptr - 4, "To: ", 4))
+	    {
+		message[message_chunks].action = ACTION_TO_ADDR;
+	    }
+	    else
+	    {
+		message[message_chunks].action = ACTION_ENCODED_TO_ADDR;
+	    }
+
+	    if (++message_chunks == (MAX_CHUNKS - 1)) {
+		fprintf(stderr, "Too many message chunks");
+		exit(-1);
+	    }
+	    ptr = endptr + sizeof(ADDRESS_TOKEN) - 1;
+	}
+	/* Code below handles the last chunk */
+    }
+#endif
+
+    /* Also gets executed if !SINGLE_RECIPIENT */
+    message[message_chunks].ptr = ptr;
+    message[message_chunks].len = strlen(ptr);
+    message[message_chunks].action = ACTION_NONE;
+    ++message_chunks;
+}
+
 
 /* reads the file and parses the addresses.
  * input: file pointer, pointer to buffer.
@@ -641,8 +658,14 @@ void signal_backend(int sig)
 	    }
 	}
     }
+
     do_status();
     exit(1);
+}
+
+void handle_sighup()
+{
+    reread_message = 1;
 }
 
 static void setup_signals()

@@ -45,6 +45,7 @@ static int smtp_write(int s,int close_s,char *fmt, char *arg,int look,
 
 static int in_child=0;
 extern void signal_backend(int sig);
+extern void handle_sighup();
 static userlist *gl_users=NULL;
 static flags_t flags;
 
@@ -97,10 +98,18 @@ void handle_sig(int sig)
     }
     else
     {
-	fprintf(stderr, "FATAL: parent mailer caught signal %d, exiting.\n",
-		sig);
-	signal_backend(sig);
-	exit(1);
+	if (sig == SIGHUP)
+	{
+	    handle_sighup();
+	}
+	else
+	{
+	    fprintf(stderr,
+		    "FATAL: parent mailer caught signal %d, exiting.\n",
+		    sig);
+	    signal_backend(sig);
+	    exit(1);
+	}
     }
 }
 

@@ -17,6 +17,7 @@
 #include "mailer_config.h"
 
 extern char *messagebody,*mailfrom;
+extern char *messagefile,*mpppath;
 extern int messagebody_size;
 
 static void failmpp(char *message)
@@ -25,7 +26,7 @@ static void failmpp(char *message)
     exit(1);
 }
 
-void readmessage(char *filename,char *mpp)
+void readmessage()
 {
     char cmd[MAXPATHLEN];
     char outfname[80];
@@ -33,7 +34,7 @@ void readmessage(char *filename,char *mpp)
     int fd;
 
     sprintf(outfname,"/tmp/mpp.%d",getpid());
-    sprintf(cmd,"%s %s %s %s",mpp,filename,outfname,mailfrom);
+    sprintf(cmd,"%s %s %s %s",mpppath,messagefile,outfname,mailfrom);
 
     if(system(cmd))
 	failmpp("exec");

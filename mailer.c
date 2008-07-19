@@ -14,7 +14,8 @@
 
 char *messagebody,*mailfrom,*myhostname;
 int messagebody_size;
-void readmessage(char *filename,char *mpp);
+void readmessage();
+char *messagefile,*mpppath;
 void do_list(char *fname);
 
 void usage(char *prog)
@@ -34,7 +35,9 @@ int main(int argc, char *argv[])
     if(!(myhostname=strrchr((mailfrom=argv[3]),'@'))) usage(argv[0]);
     myhostname++;
 
-    readmessage(argv[2], (argc==4 ? MPP : argv[4]));
+    messagefile = argv[2];
+    mpppath = (argc==4 ? MPP : argv[4]);
+    readmessage();
 
     /* become a process group and session leader */
     switch(fork()) {
