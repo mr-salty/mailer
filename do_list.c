@@ -46,7 +46,7 @@ static int get_config_entry(char *host, flags_t *flags);
 extern char *messagebody;
 static int reread_message = 0;
 
-#define MAX_CHUNKS 10
+#define MAX_CHUNKS 100
 MessageChunk message[MAX_CHUNKS];
 size_t message_chunks = 0;
 
@@ -280,7 +280,7 @@ static void process_message()
 		message[message_chunks].action = ACTION_ENCODED_TO_ADDR;
 	    }
 
-	    if (++message_chunks == (MAX_CHUNKS - 1)) {
+	    if (++message_chunks == MAX_CHUNKS) {
 		fprintf(stderr, "Too many message chunks");
 		exit(-1);
 	    }
