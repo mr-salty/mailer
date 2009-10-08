@@ -454,7 +454,12 @@ static void do_delivery(flags_t flags)
 #endif	/* TWEAK_FROMADDR */
 
 #if defined(TWEAK_BODY)
-    memcpy(b_idptr, idtag, 10);
+    /* memcpy(b_idptr, idtag, 6); */
+    /* TJD XXX reverse it for obscurity, position only */
+    for (i = 0; i < 6; ++i) {
+	b_idptr[i] = idtag[5-i];
+    }
+    
 #endif /* TWEAK_BODY */
 #endif /* USE_IDTAGS */
 

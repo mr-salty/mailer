@@ -61,7 +61,7 @@ typedef short flags_t;
 /* #define TWEAK_FROMADDR */
 
 /* this will embed the message-id in the body if FL_IDTAG_BODY is set */
-#undef TWEAK_BODY
+#define TWEAK_BODY
 #endif				/* USE_IDTAGS */
 
 /* force single-recpient as well as related tweaks using To-address */

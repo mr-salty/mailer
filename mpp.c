@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
     int hdr,reqhdr;
 #if defined(USE_IDTAGS)
     char idtag[MAX_ADDR_LEN+40];
+    char body_idtag[MAX_ADDR_LEN+40];
 #endif /* USE_IDTAGS */
 
     if(argc != 4)
@@ -99,6 +100,10 @@ int main(int argc, char *argv[])
     sprintf(idtag,"%s.%04d%02d%02d.%c%s.%d", HEADER_HEADER,
 	    ltime->tm_year+1900, ltime->tm_mon+1, ltime->tm_mday,
 	    '\xff',"00000.000", (int) utime);
+
+    /* short/reshuffled version of idtag, embedded in the body */
+    sprintf(body_idtag,"%c%s%1d", 
+	     '\xff',"00000", ltime->tm_wday);
 #endif /* USE_IDTAGS */
 
     /* received header */
@@ -222,7 +227,7 @@ int main(int argc, char *argv[])
      * deliver() if we don't want it.
      */
 
-    sprintf(p,"(%s)\r\n",idtag);
+    sprintf(p,"<%s>\r\n",body_idtag);
     p+=strlen(p);
 #endif
 
