@@ -34,7 +34,8 @@ extern char *messagebody,*myhostname,*mailfrom;
 extern MessageChunk message[];
 extern size_t message_chunks;
 
-#if defined(USE_IDTAGS) && defined(TWEAK_BODY)
+/* TODO - TWEAK_BODY is not supported here, get rid of it */
+#if 0 /* defined(USE_IDTAGS) && defined(TWEAK_BODY) */
 extern char *g_body_idptr;
 #endif /* USE_IDTAGS */
 
@@ -367,7 +368,8 @@ static int delivermessage(char *addr,char *hostname, userlist users[])
     if(smtp_write(s,1,"%s","DATA\r\n",354,SMTP_TIMEOUT_DATA))
 	return -1;
 
-#if defined(USE_IDTAGS) && defined(TWEAK_BODY)
+/* TODO - TWEAK_BODY is not supported here, get rid of it */
+#if 0 /* defined(USE_IDTAGS) && defined(TWEAK_BODY) */
     if(FLAG_ISSET(flags,FL_URL_BODY)) {
 	put_url(g_body_idptr, users[0].addr);
     } else if(! FLAG_ISSET(flags,FL_IDTAG_BODY)) {
