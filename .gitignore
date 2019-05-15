@@ -1,0 +1,6 @@
+# build artifacts
+*.o
+
+# binaries
+mailer
+mpp
